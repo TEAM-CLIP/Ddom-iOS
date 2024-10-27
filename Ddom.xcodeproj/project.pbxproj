@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E517C1392CCE52570000805C /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = E517C1382CCE52570000805C /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E5C704942CBE4F9B00728DF4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		E517C1382CCE52570000805C /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		E5C704832CBE4F9A00728DF4 /* Ddom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ddom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5C704932CBE4F9B00728DF4 /* DdomTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DdomTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5C7049D2CBE4F9B00728DF4 /* DdomUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DdomUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,6 +93,7 @@
 		E5C7047A2CBE4F9A00728DF4 = {
 			isa = PBXGroup;
 			children = (
+				E517C1382CCE52570000805C /* .gitignore */,
 				E5C704852CBE4F9A00728DF4 /* Ddom */,
 				E5C704962CBE4F9B00728DF4 /* DdomTests */,
 				E5C704A02CBE4F9B00728DF4 /* DdomUITests */,
@@ -225,6 +231,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E517C1392CCE52570000805C /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
