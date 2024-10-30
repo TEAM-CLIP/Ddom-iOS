@@ -4,7 +4,8 @@ struct CustomTextField<T>: View where T: Hashable {
     @Binding var text: T
     let placeholder: String
     var keyboardType: UIKeyboardType = .default
-    var onSubmit: (() -> Void)?
+    var onSubmit: (() -> Void)? = nil
+    var isError: Bool? = false
     var textColor: Color = .gray10
     var placeholderColor: Color = .gray3
     var backgroundColor: Color = .surface1
@@ -22,11 +23,11 @@ struct CustomTextField<T>: View where T: Hashable {
         .foregroundColor(textColor)
         .padding(.horizontal,12)
         .frame(maxHeight: 48)
-        .background(RoundedRectangle(cornerRadius: 8).fill(backgroundColor))
-//        .overlay(
-//            RoundedRectangle(cornerRadius: 8)
-//                .stroke(borderColor, lineWidth: 1)
-//        )
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(backgroundColor)
+                .stroke(.error, lineWidth: isError ?? false ? 1 : 0)
+        )
         .autocapitalization(.none)
         .keyboardType(keyboardType)
         .onSubmit {
