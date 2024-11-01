@@ -3,127 +3,33 @@ import Combine
 import KakaoSDKAuth
 import KakaoSDKUser
 
-struct LoginResponse: Codable {
-    let user: User
-    let token: String
-}
-
-struct ValidateResponse: Codable {
-    let isValid: Bool
-}
-
-struct CheckEmailResponse: Decodable {
+class AuthService:AuthServiceProtocol {
+    private let networkService: NetworkServiceProtocol
     
-    let isValid: Bool
-}
-
-class AuthService {
-    static let shared = AuthService()
-    private let apiManager: APIManager
-    
-    init(apiManager: APIManager = .shared) {
-        self.apiManager = apiManager
+    init(
+        networkService: NetworkServiceProtocol = NetworkService() // 구체적인 apiManager 클래스를 직접 주입하는 것이 아닌, 인터페이스만 하위속성으로 명시 후, 초기화 시 주입
+    ) {
+        self.networkService = networkService
     }
     
-    func deleteAccount(_ email:String) -> AnyPublisher<String, APIError> {
-        let endpoint = APIEndpoint.deleteAccount(email)
-        
-        return Future { promise in
-            self.apiManager.request(endpoint,
-                                    method: .delete,
-                                    parameters: nil) { (result: Result<String, APIError>) in
-                switch result {
-                case .success(let response):
-                    self.apiManager.clearToken()
-                    promise(.success(response))
-                case .failure(let error):
-                    promise(.failure(error))
-                }
-            }
-        }.eraseToAnyPublisher()
+    func socialLogin(idToken: String, provider:String) -> AnyPublisher<LoginResponse, APIError> {
+        return networkService.requestWithoutAuth(.socialLogin(provider),method: .post, parameters: ["token": idToken])
     }
     
-    func validateToken(token:String) -> AnyPublisher<Bool, APIError> {
-        let endpoint = APIEndpoint.validateToken
-        return Future { promise in
-            self.apiManager.requestWithoutAuth(endpoint,
-                                               method: .post,
-                                               parameters: ["token": token]) { (result: Result<ValidateResponse, APIError>) in
-                switch result {
-                case .success(let response):
-                    promise(.success(response.isValid))
-                case .failure(let error):
-                    promise(.failure(error))
-                }
-            }
-        }.eraseToAnyPublisher()
+    func signUp(username: String, phone: String) -> AnyPublisher<LoginResponse, APIError> {
+        let parameters: [String: Any] = ["username": username, "phone": phone]
+        return networkService.requestWithoutAuth(.signUp, method: .post, parameters: parameters)
     }
     
-    func checkEmail(_ email: String) -> AnyPublisher<Bool, APIError> {
-        let endpoint = APIEndpoint.checkEmail
-        return Future { promise in
-            self.apiManager.requestWithoutAuth(endpoint,
-                                               method: .post,
-                                               parameters: ["email": email]) { (result: Result<CheckEmailResponse, APIError>) in
-                switch result {
-                case .success(let response):
-                    promise(.success(response.isValid))
-                case .failure(let error):
-                    promise(.failure(error))
-                }
-            }
-        }.eraseToAnyPublisher()
+    func checkUsername(_ username: String) -> AnyPublisher<Bool, APIError> {
+        let parameters = ["username": username]
+        return networkService.requestWithoutAuth(.checkUsername, method: .post, parameters: parameters)
     }
+//    func deleteAccount(_ email: String) -> AnyPublisher<String, APIError> {
+//        return networkService.request(.deleteAccount(email), method: .delete, parameters: nil)
+//    }
     
-    func login(email: String, password: String) -> AnyPublisher<LoginResponse, APIError> {
-        let endpoint = APIEndpoint.login
-        return Future { promise in
-            self.apiManager.requestWithoutAuth(endpoint,
-                                               method: .post,
-                                               parameters: ["email": email, "password": password]) { (result: Result<LoginResponse, APIError>) in
-                switch result {
-                case .success(let response):
-                    self.apiManager.saveToken(response.token, for: response.user.email)
-                    promise(.success(response))
-                case .failure(let error):
-                    promise(.failure(error))
-                }
-            }
-        }.eraseToAnyPublisher()
-    }
-    
-    func signUp(email: String, username: String, password: String) -> AnyPublisher<LoginResponse, APIError> {
-        let endpoint = APIEndpoint.signUp
-        return Future { promise in
-            self.apiManager.requestWithoutAuth(endpoint,
-                                               method: .post,
-                                               parameters: ["email": email, "username": username, "password": password]) { (result: Result<LoginResponse, APIError>) in
-                switch result {
-                case .success(let response):
-                    self.apiManager.saveToken(response.token, for: response.user.email)
-                    promise(.success(response))
-                case .failure(let error):
-                    promise(.failure(error))
-                }
-            }
-        }.eraseToAnyPublisher()
-    }
-    
-    func authenticateSocialLoginWithServer(identityToken: String,provider:String) -> AnyPublisher<LoginResponse, APIError> {
-        let endpoint = APIEndpoint.socialLogin(provider)
-        
-        return Future { promise in
-            self.apiManager.requestWithoutAuth(endpoint,
-                                               method: .post,
-                                               parameters: [ "identityToken":identityToken ]) { (result: Result<LoginResponse, APIError>) in
-                switch result {
-                case .success(let response):
-                    self.apiManager.saveToken(response.token, for: response.user.email)
-                    promise(.success(response))
-                case .failure(let error):
-                    promise(.failure(error))
-                }
-            }
-        }.eraseToAnyPublisher()
-    }
+//    func validateToken(_ token: String) -> AnyPublisher<Bool, APIError> {
+//        return networkService.requestWithoutAuth(.validateToken, method: .post, parameters: ["token": token])
+//    }
 }

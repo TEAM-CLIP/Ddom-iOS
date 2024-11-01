@@ -8,14 +8,43 @@
 import Foundation
 import Security
 
-class KeychainManager {
-    enum KeychainError: Error {
-        case unknown(OSStatus)
-        case notFound
-        case encodingError
-    }
+enum KeychainError: Error {
+    case unknown(OSStatus)
+    case notFound
+    case encodingError
+}
 
-    static func save(token: String, service: String, account: String) throws {
+protocol KeychainManagerProtocol {
+    func save(token: String, service: String, account: String) throws
+    func retrieve(service: String, account: String) throws -> String
+    func delete(service: String, account: String) throws
+}
+
+class KeychainManager:KeychainManagerProtocol {
+    static let shared = KeychainManager() // 싱글톤 유지
+    private init() {} // 싱글톤 유지
+    
+    func getToken() -> String? {
+        try? self.retrieve(service: APIConstants.tokenService, account: getUsername() ?? "")
+    }
+    
+    func saveToken(_ token: String, for username: String) {
+        try? self.save(token: token, service: APIConstants.tokenService, account: username)
+        UserDefaults.standard.set(username, forKey: "lastLoggedInUsername")
+    }
+    
+    func clearToken() {
+        guard let username = getUsername() else { return }
+        try? self.delete(service: APIConstants.tokenService, account: username)
+        UserDefaults.standard.removeObject(forKey: "lastLoggedInUsername")
+    }
+    
+    func getUsername() -> String? {
+        UserDefaults.standard.string(forKey: "lastLoggedInUsername")
+    }
+    
+    //MARK: - 핵심 로직
+    func save(token: String, service: String, account: String) throws {
         guard let data = token.data(using: .utf8) else {
             throw KeychainError.encodingError
         }
@@ -47,8 +76,8 @@ class KeychainManager {
             throw KeychainError.unknown(status)
         }
     }
-
-    static func retrieve(service: String, account: String) throws -> String {
+    
+    func retrieve(service: String, account: String) throws -> String {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -56,31 +85,31 @@ class KeychainManager {
             kSecMatchLimit as String: kSecMatchLimitOne,
             kSecReturnData as String: true
         ]
-
+        
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-
+        
         guard status != errSecItemNotFound else {
             throw KeychainError.notFound
         }
         guard status == errSecSuccess else {
             throw KeychainError.unknown(status)
         }
-
+        
         guard let data = result as? Data, let token = String(data: data, encoding: .utf8) else {
             throw KeychainError.unknown(status)
         }
-
+        
         return token
     }
-
-    static func delete(service: String, account: String) throws {
+    
+    func delete(service: String, account: String) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
-
+        
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw KeychainError.unknown(status)

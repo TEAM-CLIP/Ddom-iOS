@@ -8,4 +8,6 @@
 enum Route: Hashable {
     case createAccount
     case onboarding
+    case selectLocation
+    case searchStore
 }

@@ -52,7 +52,7 @@ class CreateAccountViewModel: ObservableObject {
     
     private let authService: AuthService
     
-    init(authService: AuthService = AuthService.shared) {
+    init(authService: AuthService = AuthService()) {
         self.authService = authService
     }
     
@@ -87,21 +87,34 @@ class CreateAccountViewModel: ObservableObject {
         // errorText="닉네임 중복입니다"
         isUsernameValid = true
     }
-
+    
     func signUp() {
-        isLoading = true
-        
-//        authService.signUp(username: username, phone: phone)
-//            .receive(on: DispatchQueue.main)
-//            .sink { [weak self] completion in
-//                self?.isLoading = false
-//                if case .failure(let error) = completion {
-//                    
-//                    print(error.localizedDescription)
-//                }
-//            } receiveValue: { [weak self] signUpResponse in
-//                self?.handleSuccessfulLogin(loginResponse: signUpResponse)
-//            }
-//            .store(in: &cancellables)
+        appState.isLoggedIn = true
+        //        authService.signUp(username: username, phone: phone)
+        //            .receive(on: DispatchQueue.main)
+        //            .sink { [weak self] completion in
+        //                self?.isLoading = false
+        //                if case .failure(let error) = completion {
+        //
+        //                    print(error.localizedDescription)
+        //                }
+        //            } receiveValue: { [weak self] signUpResponse in
+        //                self?.handleSuccessfulLogin(loginResponse: signUpResponse)
+        //            }
+        //            .store(in: &cancellables)
     }
+    
+//    private func handleSuccessfulLogin(loginResponse: LoginResponse) {
+//        do {
+//            try KeychainManager.shared.save(token: loginResponse.token,
+//                                            service: APIConstants.tokenService,
+//                                            account: loginResponse.user.username)
+//            UserDefaults.standard.set(loginResponse.user.username, forKey: "lastLoggedInUsername")
+//            appState.isLoggedIn = true
+//        } catch {
+//            print(error.localizedDescription)
+////            currentToast = .error(error.localizedDescription)
+//        }
+//    }
 }
+

@@ -11,9 +11,9 @@ class OnboardingViewModel: ObservableObject {
     
     @Published var navigationPath = NavigationPath()
     @Published var isSocialLoading: Bool = false
-    private let authService: AuthService
+    private let authService: AuthServiceProtocol
     
-    init(authService: AuthService = AuthService.shared) {
+    init(authService: AuthServiceProtocol = AuthService()) {
         self.authService = authService
         checkLoginStatus()
     }
@@ -23,7 +23,7 @@ class OnboardingViewModel: ObservableObject {
     private func checkLoginStatus() {
         if let savedEmail = UserDefaults.standard.string(forKey: "lastLoggedInEmail") {
             do {
-                let _ = try KeychainManager.retrieve(service: APIConstants.tokenService, account: savedEmail)
+                let _ = try KeychainManager.shared.retrieve(service: APIConstants.tokenService, account: savedEmail)
                 print("isLoggedIn true")
             } catch{
                 AppState.shared.isLoggedIn = false
@@ -85,9 +85,14 @@ class OnboardingViewModel: ObservableObject {
         self.authenticateWithServer(identityToken)
     }
     
+    func moveToMainTabView(){
+        navigationPath.append(Route.createAccount)
+    }
+    
     private func authenticateWithServer(_ idToken: String) {
         print("authenticateWithServer: \(idToken)")
         navigationPath.append(Route.createAccount)
+//        appState.isLoggedIn = true
         // MARK: 서버로부터 기존 사용자 여부 파악 -> 여부에 따라 CreateAccountView 이동 or appState.isLoggedIn True로
 //        authService.authenticateSocialLoginWithServer(identityToken: idToken, provider: "kakao")
 //            .receive(on: DispatchQueue.main)
@@ -104,11 +109,11 @@ class OnboardingViewModel: ObservableObject {
     
     private func handleSuccessfulLogin(loginResponse: LoginResponse) {
         do {
-            try KeychainManager.save(token: loginResponse.token,
+            try KeychainManager.shared.save(token: loginResponse.token,
                                      service: APIConstants.tokenService,
-                                     account: loginResponse.user.email)
-            print("lastLoggedInEmail changed into \(loginResponse.user.email)")
-            UserDefaults.standard.set(loginResponse.user.email, forKey: "lastLoggedInEmail")
+                                     account: loginResponse.user.username)
+            
+            UserDefaults.standard.set(loginResponse.user.username, forKey: "lastLoggedInUsername")
             appState.isLoggedIn = true
         } catch {
             

@@ -78,7 +78,7 @@ struct OnboardingView: View {
 //                    )
                     
                     Button(action: {
-                        // 로그인 없이 사용하기 액션
+                        viewModel.moveToMainTabView()
                     }) {
                         Text("로그인 없이 사용하기")
                             .fontStyle(.caption)
