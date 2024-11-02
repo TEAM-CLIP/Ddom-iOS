@@ -105,7 +105,7 @@ struct CreateAccountView: View {
                     Spacer()
                     
                     CustomButton(
-                        action: {print("submit")},
+                        action: {viewModel.handleSubmit()},
                         isPrimary: false,
                         isLoading: false,
                         text: "입력하기",

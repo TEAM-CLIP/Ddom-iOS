@@ -21,7 +21,7 @@ class NetworkService: NetworkServiceProtocol {
                 return
             }
             
-            if let token = KeychainManager.shared.getToken() {
+            if let token = KeychainManager.shared.getAccessToken() {
                 headers = ["Authorization": "Bearer \(token)"]
             } else if APIConstants.isDevelopment {
                 headers = ["Authorization": "Bearer dummyToken"]

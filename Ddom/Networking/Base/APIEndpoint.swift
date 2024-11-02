@@ -10,20 +10,20 @@ import Foundation
 enum APIEndpoint {
     case signUp
     case checkUsername
-    case validateToken // Token
+    case reissueToken
     case socialLogin(String) // Provider
     case deleteAccount(String) // email
     case mock(String) // tmp endpoint
     var path: String {
         switch self {
         case .signUp:
-            return "/auth/register"
-        case .validateToken:
-            return "/auth/validate-token"
+            return "/users"
+        case .reissueToken:
+            return "/auth/reissue"
         case .checkUsername:
-            return "/auth/check"
+            return "/users/verify/nickname"
         case .socialLogin(let provider):
-            return "/auth/social/\(provider)"
+            return "/auth/login/\(provider)"
         case .deleteAccount(let email):
             return "/auth/\(email)"
         case .mock(let endpoint):

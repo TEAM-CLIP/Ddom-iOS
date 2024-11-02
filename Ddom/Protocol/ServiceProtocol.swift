@@ -21,7 +21,7 @@ protocol NetworkServiceProtocol {
 }
 
 protocol AuthServiceProtocol {
-    func socialLogin(idToken: String, provider:String) -> AnyPublisher<LoginResponse, APIError>
+    func socialLogin(idToken: String, provider:String) -> AnyPublisher<APIResponse, APIError>
     func signUp(username: String, phone: String) -> AnyPublisher<LoginResponse, APIError>
     func checkUsername(_ username:String) -> AnyPublisher<Bool,APIError>
 }

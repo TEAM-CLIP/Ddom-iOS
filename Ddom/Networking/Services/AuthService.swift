@@ -12,8 +12,8 @@ class AuthService:AuthServiceProtocol {
         self.networkService = networkService
     }
     
-    func socialLogin(idToken: String, provider:String) -> AnyPublisher<LoginResponse, APIError> {
-        return networkService.requestWithoutAuth(.socialLogin(provider),method: .post, parameters: ["token": idToken])
+    func socialLogin(idToken: String, provider:String) -> AnyPublisher<APIResponse, APIError> {
+        return networkService.requestWithoutAuth(.socialLogin(provider),method: .post, parameters: ["accessToken": idToken])
     }
     
     func signUp(username: String, phone: String) -> AnyPublisher<LoginResponse, APIError> {

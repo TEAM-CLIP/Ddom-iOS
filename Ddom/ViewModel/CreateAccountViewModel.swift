@@ -42,10 +42,12 @@ class CreateAccountViewModel: ObservableObject {
     
     @Published var errorText: String = ""
     @Published var isUsernameValid: Bool = false
+    @Published var isDetailViewPresent: Bool = false
     @Published var isLoading:Bool = false
     
     var isSignUpButtonDisabled:Bool {
         username.isEmpty ||
+        phone.isEmpty ||
         !isUsernameValid ||
         isLoading
     }
@@ -69,6 +71,10 @@ class CreateAccountViewModel: ObservableObject {
             result.append(char)
         }
         return result
+    }
+    
+    func handleSubmit(){
+        isDetailViewPresent = true
     }
     
     func handleDuplicateCheckButton(){

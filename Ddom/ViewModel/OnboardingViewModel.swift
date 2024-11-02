@@ -15,23 +15,23 @@ class OnboardingViewModel: ObservableObject {
     
     init(authService: AuthServiceProtocol = AuthService()) {
         self.authService = authService
-        checkLoginStatus()
+        //        checkLoginStatus()
     }
     
     private var cancellables = Set<AnyCancellable>()
     
-    private func checkLoginStatus() {
-        if let savedEmail = UserDefaults.standard.string(forKey: "lastLoggedInEmail") {
-            do {
-                let _ = try KeychainManager.shared.retrieve(service: APIConstants.tokenService, account: savedEmail)
-                print("isLoggedIn true")
-            } catch{
-                AppState.shared.isLoggedIn = false
-            }
-        } else {
-            AppState.shared.isLoggedIn = false
-        }
-    }
+    //    private func checkLoginStatus() {
+    //        if let savedEmail = UserDefaults.standard.string(forKey: "lastLoggedInEmail") {
+    //            do {
+    //                let _ = try KeychainManager.shared.retrieve(forKey: "accessToken")
+    //                print("isLoggedIn true")
+    //            } catch{
+    //                AppState.shared.isLoggedIn = false
+    //            }
+    //        } else {
+    //            AppState.shared.isLoggedIn = false
+    //        }
+    //    }
     
     //MARK: - 소셜로그인 관련 메서드
     
@@ -48,7 +48,7 @@ class OnboardingViewModel: ObservableObject {
                 
                 // 카카오 토큰을 성공적으로 받아왔을 때 서버 인증 진행
                 if let token = oauthToken?.accessToken {
-                    self?.authenticateWithServer(token)
+                    self?.authenticateWithServer(for:"KAKAO", with:token)
                 }
             }
         } else {
@@ -60,7 +60,7 @@ class OnboardingViewModel: ObservableObject {
                     return
                 }
                 if let token = oauthToken?.accessToken {
-                    self?.authenticateWithServer(token)
+                    self?.authenticateWithServer(for:"KAKAO", with:token)
                 }
             }
         }
@@ -82,38 +82,51 @@ class OnboardingViewModel: ObservableObject {
             return
         }
         
-        self.authenticateWithServer(identityToken)
+        authenticateWithServer(for:"APPLE", with:identityToken)
     }
     
     func moveToMainTabView(){
         navigationPath.append(Route.createAccount)
     }
     
-    private func authenticateWithServer(_ idToken: String) {
-        print("authenticateWithServer: \(idToken)")
-        navigationPath.append(Route.createAccount)
-//        appState.isLoggedIn = true
-        // MARK: 서버로부터 기존 사용자 여부 파악 -> 여부에 따라 CreateAccountView 이동 or appState.isLoggedIn True로
-//        authService.authenticateSocialLoginWithServer(identityToken: idToken, provider: "kakao")
-//            .receive(on: DispatchQueue.main)
-//            .sink { [weak self] completion in
-//                self?.isSocialLoading = false
-//                if case .failure(let error) = completion {
-//                    print(error.localizedDescription)
-//                }
-//            } receiveValue: { [weak self] loginResponse in
-//                self?.handleSuccessfulLogin(loginResponse: loginResponse)
-//            }
-//            .store(in: &cancellables)
+    private func authenticateWithServer(for provider:String, with idToken: String) {
+        authService.socialLogin(idToken: idToken, provider: provider)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                self?.isSocialLoading = false
+                if case .failure(let error) = completion {
+                    print(error.localizedDescription)
+                }
+            } receiveValue: { [weak self] response in
+                guard let self = self else {return}
+                switch response {
+                case .success(let authResponse):
+                    handleSuccessfulLogin(accessToken: authResponse.accessToken,
+                                          refreshToken: authResponse.refreshToken)
+                    
+                case .needsRegistration(let registerResponse):
+                    handleRegistration(registerToken: registerResponse.registerToken)
+                    
+                case .error(let errorResponse):
+                    print(errorResponse.message)
+                }
+            }
+            .store(in: &cancellables)
     }
     
-    private func handleSuccessfulLogin(loginResponse: LoginResponse) {
+    private func handleRegistration(registerToken:String) {
+        do{
+            try KeychainManager.shared.save(token: registerToken, forKey: "registerToken")
+            navigationPath.append(Route.createAccount)
+        } catch {
+            print("handleRegistration Failed:\(error.localizedDescription)")
+        }
+    }
+    
+    private func handleSuccessfulLogin(accessToken: String,refreshToken:String) {
         do {
-            try KeychainManager.shared.save(token: loginResponse.token,
-                                     service: APIConstants.tokenService,
-                                     account: loginResponse.user.username)
-            
-            UserDefaults.standard.set(loginResponse.user.username, forKey: "lastLoggedInUsername")
+            try KeychainManager.shared.save(token: accessToken, forKey: "accessToken")
+            try KeychainManager.shared.save(token: refreshToken, forKey: "refreshToken")
             appState.isLoggedIn = true
         } catch {
             
