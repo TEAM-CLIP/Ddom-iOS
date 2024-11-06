@@ -1,9 +1,6 @@
-//
 //  OnboardingView.swift
 //  Ddom
-//
 //  Created by 김 형석 on 10/15/24.
-//
 
 import SwiftUI
 import UIKit
@@ -59,7 +56,7 @@ struct OnboardingView: View {
                     
                     SignInWithAppleButton(
                         onRequest: { request in
-                            request.requestedScopes = [.fullName]
+                            request.requestedScopes = [.fullName,.email]
                         },
                         onCompletion: { result in
                             switch result {

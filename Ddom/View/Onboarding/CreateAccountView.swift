@@ -11,8 +11,6 @@ struct CreateAccountView: View {
     @StateObject var viewModel = CreateAccountViewModel()
     @FocusState private var focusedField: Field?
     
-    @Environment(\.presentationMode) var presentationMode
-    
     enum Field: Hashable {
         case username
         case phone
@@ -71,7 +69,7 @@ struct CreateAccountView: View {
                             CustomButton(
                                 action:{ viewModel.handleDuplicateCheckButton() },
                                 isPrimary: false,
-                                isLoading: false,
+                                isLoading: viewModel.isLoading,
                                 text: "중복확인",
                                 isDisabled: viewModel.username.isEmpty || viewModel.isUsernameValid,
                                 isFullWidth: false
@@ -105,7 +103,9 @@ struct CreateAccountView: View {
                     Spacer()
                     
                     CustomButton(
-                        action: {viewModel.handleSubmit()},
+                        action: {
+                            viewModel.isDetailViewPresent = true
+                        },
                         isPrimary: false,
                         isLoading: false,
                         text: "입력하기",
@@ -115,6 +115,12 @@ struct CreateAccountView: View {
                 }
                 .padding(.horizontal,16)
             }
+        }
+        .sheet(isPresented: $viewModel.isDetailViewPresent) {
+            TermsDetailBottomSheet(viewModel:viewModel)
+                .presentationDetents([.height(540)])
+                .presentationDragIndicator(.hidden)
+                .presentationBackground(.clear)
         }
         .onAppear{
             focusedField = Field.username

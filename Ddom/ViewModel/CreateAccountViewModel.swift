@@ -45,6 +45,33 @@ class CreateAccountViewModel: ObservableObject {
     @Published var isDetailViewPresent: Bool = false
     @Published var isLoading:Bool = false
     
+    @Published var isServiceChecked:Bool = false
+    @Published var isPrivacyChecked:Bool = false
+    @Published var isAdvertisementChecked:Bool = false
+    @Published var isMarketingChecked:Bool = false
+    
+    var isAllChecked:Bool {
+        isServiceChecked &&
+        isPrivacyChecked &&
+        isAdvertisementChecked &&
+        isMarketingChecked
+    }
+    
+    func toggleAllChecks() {
+        let newValue = !isAllChecked
+        withAnimation(.fastEaseOut) {
+            isServiceChecked = newValue
+            isPrivacyChecked = newValue
+            isAdvertisementChecked = newValue
+            isMarketingChecked = newValue
+        }
+    }
+    
+    var isAgreeButtonDisabled:Bool {
+        !(isServiceChecked && isPrivacyChecked) ||
+        isLoading
+    }
+    
     var isSignUpButtonDisabled:Bool {
         username.isEmpty ||
         phone.isEmpty ||
@@ -74,7 +101,8 @@ class CreateAccountViewModel: ObservableObject {
     }
     
     func handleSubmit(){
-        isDetailViewPresent = true
+        isDetailViewPresent = false
+        signUp()
     }
     
     func handleDuplicateCheckButton(){
