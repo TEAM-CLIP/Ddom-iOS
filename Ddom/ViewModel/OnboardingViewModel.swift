@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import AuthenticationServices
+
 import KakaoSDKCommon
 import KakaoSDKAuth
 import KakaoSDKUser
@@ -15,30 +16,13 @@ class OnboardingViewModel: ObservableObject {
     
     init(authService: AuthServiceProtocol = AuthService()) {
         self.authService = authService
-        //        checkLoginStatus()
     }
     
     private var cancellables = Set<AnyCancellable>()
-    
-    //    private func checkLoginStatus() {
-    //        if let savedEmail = UserDefaults.standard.string(forKey: "lastLoggedInEmail") {
-    //            do {
-    //                let _ = try KeychainManager.shared.retrieve(forKey: "accessToken")
-    //                print("isLoggedIn true")
-    //            } catch{
-    //                AppState.shared.isLoggedIn = false
-    //            }
-    //        } else {
-    //            AppState.shared.isLoggedIn = false
-    //        }
-    //    }
-    
     //MARK: - 소셜로그인 관련 메서드
-    
     func performKakaoLogin() {
         isSocialLoading = true
         if UserApi.isKakaoTalkLoginAvailable() {
-            // 카카오톡 앱을 통한 로그인
             UserApi.shared.loginWithKakaoTalk { [weak self] (oauthToken, error) in
                 if let error = error {
                     print(error.localizedDescription)
@@ -46,13 +30,11 @@ class OnboardingViewModel: ObservableObject {
                     return
                 }
                 
-                // 카카오 토큰을 성공적으로 받아왔을 때 서버 인증 진행
                 if let token = oauthToken?.accessToken {
                     self?.authenticateWithServer(for:"KAKAO", with:token)
                 }
             }
         } else {
-            // 카카오톡 앱이 설치되어 있지 않을 경우 웹 로그인
             UserApi.shared.loginWithKakaoAccount { [weak self] (oauthToken, error) in
                 if let error = error {
                     print(error.localizedDescription)
@@ -66,6 +48,7 @@ class OnboardingViewModel: ObservableObject {
         }
     }
     
+    // TODO: Apple 처음 로그인 시, 이메일 값 UserDefaults로 저장 구현후, 서버에 같이 인자로 전달
     func performAppleLogin(_ result: ASAuthorization) {
         isSocialLoading = true
         
@@ -85,42 +68,36 @@ class OnboardingViewModel: ObservableObject {
         authenticateWithServer(for:"APPLE", with:identityToken)
     }
     
-    func moveToMainTabView(){
-        navigationPath.append(Route.createAccount)
-    }
-    
     private func authenticateWithServer(for provider:String, with idToken: String) {
         authService.socialLogin(idToken: idToken, provider: provider)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 self?.isSocialLoading = false
+                print(completion)
                 if case .failure(let error) = completion {
-                    print(error.localizedDescription)
+                    print("Error occurred: \(error)")
                 }
-            } receiveValue: { [weak self] response in
+            } receiveValue: { [weak self] (statusCode, data) in
                 guard let self = self else {return}
-                switch response {
-                case .success(let authResponse):
-                    handleSuccessfulLogin(accessToken: authResponse.accessToken,
-                                          refreshToken: authResponse.refreshToken)
+                switch statusCode {
+                case 200:
+                    if let res = try? JSONDecoder().decode(SocialLoginResponse.self, from: data) {
+                        handleSuccessfulLogin(
+                            accessToken: res.accessToken,
+                            refreshToken: res.refreshToken
+                        )
+                    }
                     
-                case .needsRegistration(let registerResponse):
-                    handleRegistration(registerToken: registerResponse.registerToken)
-                    
-                case .error(let errorResponse):
-                    print(errorResponse.message)
+                case 201:
+                    if let res = try? JSONDecoder().decode(RegisterTokenResponse.self, from: data) {
+                        UserDefaults.standard.set(res.registerToken, forKey: "registerToken")
+                        navigationPath.append(Route.createAccount)
+                    }
+                default:
+                    print("Unexpected status code: \(statusCode)")
                 }
             }
             .store(in: &cancellables)
-    }
-    
-    private func handleRegistration(registerToken:String) {
-        do{
-            try KeychainManager.shared.save(token: registerToken, forKey: "registerToken")
-            navigationPath.append(Route.createAccount)
-        } catch {
-            print("handleRegistration Failed:\(error.localizedDescription)")
-        }
     }
     
     private func handleSuccessfulLogin(accessToken: String,refreshToken:String) {
@@ -129,7 +106,6 @@ class OnboardingViewModel: ObservableObject {
             try KeychainManager.shared.save(token: refreshToken, forKey: "refreshToken")
             appState.isLoggedIn = true
         } catch {
-            
             print(error.localizedDescription)
         }
     }
