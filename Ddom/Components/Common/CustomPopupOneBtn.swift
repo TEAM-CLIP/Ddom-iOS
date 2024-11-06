@@ -4,61 +4,61 @@ struct CustomPopupOneBtn: View {
     @Binding var isShowing: Bool
     
     let title: String
-    let message: String
-    let primaryButtonTitle: String
-    let primaryAction: () -> Void
-    let isDisabled: Bool
+    let message: String?
+    let buttonTitle: String
+    let action: () -> Void
     
     var body: some View {
         ZStack {
             Color.black.opacity(0.3)
                 .edgesIgnoringSafeArea(.all)
             
-            VStack (spacing:0){
-                Button(action: {
-                    withAnimation (.fastEaseOut) { isShowing = false }
-                }) {
-                    Image(systemName: "xmark")
-                        .foregroundColor(.gray)
-                        .padding(8)
+            VStack(spacing: 0) {
+                VStack(spacing:6){
+                    Text(title)
+                        .fontStyle(.body3)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.gray9)
+                    
+                    if let message = message {
+                        Text(message)
+                            .fontStyle(.caption1)
+                            .foregroundColor(.gray5)
+                            .multilineTextAlignment(.center)
+                    }
                 }
-                .frame(maxWidth: .infinity,alignment: .trailing)
+                .padding(.vertical,20)
                 
-                Text(title)
-                    .fontStyle(.heading1)
-                    .foregroundColor(.gray9)
-                    .padding(.top, -16)
-                    .padding(.bottom, 6)
-                
-                Text(message)
-                    .fontStyle(.body3)
-                    .foregroundColor(.gray5)
-                    .multilineTextAlignment(.center)
-                
-                Spacer().frame(height:20)
-                
-                Button(action: {
-                    primaryAction()
-                    withAnimation (.fastEaseOut) { isShowing = false }
-                }) {
-                    Text(primaryButtonTitle)
-                        .frame(maxWidth: .infinity)
-                        .fontStyle(.title1)
-                        .padding()
-                        .background(isDisabled ? .gray5 : .primary8)
-                        .foregroundStyle(isDisabled ? .gray6 : .gray1)
-                        .cornerRadius(8)
+                VStack(spacing: 4) {
+                    Button(action: {
+                        action()
+                        withAnimation(.fastEaseOut) { isShowing = false }
+                    }) {
+                        Text(buttonTitle)
+                            .frame(maxWidth: .infinity)
+                            .fontStyle(.body5)
+                            .padding(.vertical, 9)
+                            .foregroundStyle(.white)
+                            .background(RoundedRectangle(cornerRadius: 8)
+                                .fill(.gray10)
+                            )
+                    }
+                    
+                    Button(action: {
+                        withAnimation(.fastEaseOut) { isShowing = false }
+                    }) {
+                        Text("닫기")
+                            .fontStyle(.caption1)
+                            .foregroundStyle(.gray5)
+                    }
+                    .padding(8)
                 }
-                .disabled(isDisabled)
-                
-                
             }
-            .padding(12)
-            .background{
-                RoundedRectangle(cornerRadius: 16).fill(.gray1)
-                    .shadow(radius: 10)
-            }
-            .padding(.horizontal, 40)
+            .padding(.horizontal,12)
+            .padding(.vertical,8)
+            .background(RoundedRectangle(cornerRadius:20)
+                .fill(.white))
+            .padding(.horizontal, 44)
         }
     }
 }
