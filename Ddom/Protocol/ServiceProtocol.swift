@@ -7,26 +7,30 @@
 
 import Combine
 import Alamofire
+import Foundation
 
 protocol NetworkServiceProtocol {
-    func request<T: Decodable>(
+    func request(
         _ endpoint: APIEndpoint,
         method: HTTPMethod,
         parameters: Parameters?
-    ) -> AnyPublisher<T, APIError>
+    ) -> AnyPublisher<(Int,Data), APIError>
     
-    func requestWithoutAuth<T: Decodable>(_ endpoint: APIEndpoint,
-                                          method: HTTPMethod,
-                                          parameters: Parameters?) -> AnyPublisher<T, APIError>
+    func requestWithoutAuth(
+           _ endpoint: APIEndpoint,
+           method: HTTPMethod,
+           parameters: Parameters?
+       ) -> AnyPublisher<(Int, Data), APIError>
 }
 
 protocol AuthServiceProtocol {
-    func socialLogin(idToken: String, provider:String) -> AnyPublisher<APIResponse, APIError>
-    func signUp(username: String, phone: String) -> AnyPublisher<LoginResponse, APIError>
-    func checkUsername(_ username:String) -> AnyPublisher<Bool,APIError>
+    func socialLogin(idToken: String, provider: String) -> AnyPublisher<(Int, Data), APIError>
+//    func socialLogin(idToken: String, provider: String) -> AnyPublisher<LoginResult, APIError>
+    func signUp(_ params: [String:Any] ) -> AnyPublisher<(Int, Data), APIError>
+    func verifyUsername(_ username:String) -> AnyPublisher<(Int, Data),APIError>
 }
 
 protocol StoreServiceProtocol{
-    func fetchLocations() -> AnyPublisher<ZoneResponse, APIError>
-    func fetchRestaurants(for locationId:String) -> AnyPublisher<StoreResponse, APIError>
+    func getZones() -> AnyPublisher<(Int, Data), APIError>
+    func getStores(for locationId:String) -> AnyPublisher<(Int, Data), APIError>
 }

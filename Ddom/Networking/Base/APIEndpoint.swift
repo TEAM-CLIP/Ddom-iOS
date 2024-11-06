@@ -8,12 +8,14 @@
 import Foundation
 
 enum APIEndpoint {
-    case signUp
-    case checkUsername
+    case getStores
+    case getZones
+    
     case reissueToken
     case socialLogin(String) // Provider
-    case deleteAccount(String) // email
-    case mock(String) // tmp endpoint
+    case signUp
+    case checkUsername
+    
     var path: String {
         switch self {
         case .signUp:
@@ -24,10 +26,10 @@ enum APIEndpoint {
             return "/users/verify/nickname"
         case .socialLogin(let provider):
             return "/auth/login/\(provider)"
-        case .deleteAccount(let email):
-            return "/auth/\(email)"
-        case .mock(let endpoint):
-            return "/\(endpoint)"
+        case .getStores:
+            return "/stores"
+        case .getZones:
+            return "/zones"
         }
     }
 }

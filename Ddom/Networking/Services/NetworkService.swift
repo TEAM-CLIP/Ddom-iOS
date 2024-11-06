@@ -9,11 +9,11 @@ import Alamofire
 import Combine
 
 class NetworkService: NetworkServiceProtocol {
-    func request<T: Decodable>(
+    func request(
         _ endpoint: APIEndpoint,
         method: HTTPMethod = .get,
         parameters: Parameters? = nil
-    ) -> AnyPublisher<T, APIError> {
+    ) -> AnyPublisher<(Int, Data), APIError> {
         return Future { promise in
             var headers: HTTPHeaders = [:]
             if AppState.shared.isGuestMode {
@@ -38,39 +38,54 @@ class NetworkService: NetworkServiceProtocol {
                 headers: headers
             )
             .validate()
-            .responseDecodable(of: T.self) { response in
-                switch response.result {
-                case .success(let value):
-                    promise(.success(value))
-                case .failure(let error):
+            .responseData { response in
+                if let statusCode = response.response?.statusCode,
+                   let data = response.data {
+                    promise(.success((statusCode, data)))
+                } else if let error = response.error {
                     promise(.failure(APIError(afError: error)))
+                } else {
+                    promise(.failure(.unknown))
                 }
             }
+            //MARK: Legacy
+//            .responseDecodable(of: T.self) { response in
+//                switch response.result {
+//                case .success(let value):
+//                    promise(.success(value))
+//                case .failure(let error):
+//                    promise(.failure(APIError(afError: error)))
+//                }
+//            }
             
         }
         .eraseToAnyPublisher()
     }
     
-    func requestWithoutAuth<T: Decodable>(_ endpoint: APIEndpoint,
-                                          method: HTTPMethod = .get,
-                                          parameters: Parameters? = nil) -> AnyPublisher<T, APIError> {
-        return Future { promise in
-            AF.request(
-                APIConstants.baseUrl + endpoint.path,
-                method: method,
-                parameters: parameters,
-                encoding: JSONEncoding.default
-            )
-            .validate()
-            .responseDecodable(of: T.self) { response in
-                switch response.result {
-                case .success(let value):
-                    promise(.success(value))
-                case .failure(let error):
-                    promise(.failure(APIError(afError: error)))
-                }
-            }
-        }
-        .eraseToAnyPublisher()
-    }
+    func requestWithoutAuth(
+           _ endpoint: APIEndpoint,
+           method: HTTPMethod = .get,
+           parameters: Parameters? = nil
+       ) -> AnyPublisher<(Int, Data), APIError> {
+           return Future { promise in
+               AF.request(
+                   APIConstants.baseUrl + endpoint.path,
+                   method: method,
+                   parameters: parameters,
+                   encoding: JSONEncoding.default
+               )
+               .validate()
+               .responseData { response in
+                   if let statusCode = response.response?.statusCode,
+                      let data = response.data {
+                       promise(.success((statusCode, data)))
+                   } else if let error = response.error {
+                       promise(.failure(APIError(afError: error)))
+                   } else {
+                       promise(.failure(.unknown))
+                   }
+               }
+           }
+           .eraseToAnyPublisher()
+       }
 }

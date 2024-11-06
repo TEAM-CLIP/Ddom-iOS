@@ -4,6 +4,11 @@
 //
 //  Created by Neoself on 11/1/24.
 //
+enum APIResponse: Decodable {
+    case socialLo(SocialLoginResponse)
+    case needsRegistration(RegisterTokenResponse)
+    case error(ErrorResponse)
+}
 
 struct StoreResponse: Codable {
     let registered: [Store]
@@ -19,22 +24,21 @@ struct LoginResponse: Codable {
     let token: String
 }
 
-enum APIResponse: Decodable {
-    case success(AuthTokenResponse)
-    case needsRegistration(RegisterTokenResponse)
-    case error(ErrorResponse)
-}
-
-struct AuthTokenResponse: Codable {
-    let accessToken: String
-    let refreshToken: String
-}
-
-// 인증 필요 응답 (401)
 struct RegisterTokenResponse: Codable {
     let registerToken: String
 }
 
+struct SocialLoginResponse: Codable {
+    let accessToken: String
+    let refreshToken: String
+}
+struct SignUpResponse: Codable {
+    let accessToken: String
+    let refreshToken: String
+}
+struct VerifyNicknameResponse : Codable {
+    let isDuplicated : Bool
+}
 // 에러 응답 (4XX)
 struct ErrorResponse: Codable {
     let message: String
