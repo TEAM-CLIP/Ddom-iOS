@@ -1,15 +1,13 @@
-//
 //  OnboardingView.swift
 //  Ddom
-//
 //  Created by 김 형석 on 10/15/24.
-//
 
 import SwiftUI
 import UIKit
+import AuthenticationServices
 
 struct OnboardingView: View {
-    @StateObject var viewModel: OnboardingViewModel = OnboardingViewModel()
+    @StateObject var viewModel = OnboardingViewModel()
     
     var body: some View {
         NavigationStack(path: $viewModel.navigationPath) {
@@ -42,7 +40,7 @@ struct OnboardingView: View {
                 
                 VStack(spacing: 8) {
                     Button(action: {
-                        viewModel.kakaoLogin()
+                        viewModel.performKakaoLogin()
                     }) {
                         HStack {
                             Image(systemName: "message.fill")
@@ -56,23 +54,28 @@ struct OnboardingView: View {
                         .cornerRadius(8)
                     }
                     
-                    Button(action: {
-                        // Apple 로그인 액션
-                    }) {
-                        HStack {
-                            Image(systemName: "apple.logo")
-                            Text("Apple로 로그인하기")
+                    SignInWithAppleButton(
+                        onRequest: { request in
+                            request.requestedScopes = [.fullName,.email]
+                        },
+                        onCompletion: { result in
+                            switch result {
+                            case .success(let authResults):
+                                viewModel.performAppleLogin(authResults)
+                            case .failure(let error):
+                                print(error.localizedDescription)
+                            }
                         }
-                        .fontStyle(.body5)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.black)
-                        .cornerRadius(8)
-                    }
+                    )
+                    .frame(height: 50)
+                    .cornerRadius(10)
+//                    .overlay(
+//                        RoundedRectangle(cornerRadius: 10)
+//                            .stroke(.gray60, lineWidth: 1)
+//                    )
                     
                     Button(action: {
-                        // 로그인 없이 사용하기 액션
+                        viewModel.moveToMainTabView()
                     }) {
                         Text("로그인 없이 사용하기")
                             .fontStyle(.caption)

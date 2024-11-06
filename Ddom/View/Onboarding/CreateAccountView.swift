@@ -8,11 +8,8 @@
 import SwiftUI
 
 struct CreateAccountView: View {
-    @State private var username:String = ""
-    @State private var phone:String = ""
+    @StateObject var viewModel = CreateAccountViewModel()
     @FocusState private var focusedField: Field?
-    
-    @Environment(\.presentationMode) var presentationMode
     
     enum Field: Hashable {
         case username
@@ -39,6 +36,7 @@ struct CreateAccountView: View {
                                 .fontStyle(.heading2)
                                 .foregroundStyle(.gray10)
                         }
+                        
                         Text("간단한 정보를 알려주세요")
                             .fontStyle(.heading2)
                             .foregroundStyle(.gray10)
@@ -50,6 +48,7 @@ struct CreateAccountView: View {
                             Text("닉네임")
                                 .fontStyle(.body3)
                                 .foregroundStyle(.gray10)
+                            
                             Text("*")
                                 .fontStyle(.body3)
                                 .foregroundStyle(Color(hex:"ff6f6f"))
@@ -59,27 +58,25 @@ struct CreateAccountView: View {
                         
                         HStack(spacing:10){
                             CustomTextField(
-                                text: $username,
+                                text: $viewModel.username,
                                 placeholder: "닉네임을 입력해주세요",
                                 keyboardType: .default,
-                                onSubmit: {print("username") }
+                                onSubmit: {print("username") },
+                                isError: !viewModel.errorText.isEmpty
                             )
                             .focused($focusedField, equals: .username)
                             
                             CustomButton(
-                                action: {print("heello")},
+                                action:{ viewModel.handleDuplicateCheckButton() },
                                 isPrimary: false,
-                                isLoading: false,
+                                isLoading: viewModel.isLoading,
                                 text: "중복확인",
-                                isDisabled: username.isEmpty,
+                                isDisabled: viewModel.username.isEmpty || viewModel.isUsernameValid,
                                 isFullWidth: false
                             )
                         }
                         
-                        Text("최소 2자~8자 (영문,국문 가능)")
-                            .fontStyle(.caption1)
-                            .foregroundStyle(.gray5)
-                            .padding(.leading,12)
+                        statusText(viewModel: viewModel)
                     }
                     .padding(.bottom,32)
                     
@@ -95,26 +92,70 @@ struct CreateAccountView: View {
                     }
                     
                     CustomTextField(
-                        text: $phone,
+                        text: $viewModel.phone,
                         placeholder: "000-0000-0000",
                         keyboardType: .numberPad,
                         onSubmit: {print("number") }
                     )
                     .frame(maxWidth: .infinity)
                     .focused($focusedField, equals: .phone)
+                    
                     Spacer()
+                    
                     CustomButton(
-                        action: {print("submit")},
+                        action: {
+                            viewModel.isDetailViewPresent = true
+                        },
                         isPrimary: false,
                         isLoading: false,
                         text: "입력하기",
-                        isDisabled: username.isEmpty || phone.isEmpty,
+                        isDisabled: viewModel.isSignUpButtonDisabled,
                         isFullWidth: true)
                     
                 }
                 .padding(.horizontal,16)
             }
         }
+        .sheet(isPresented: $viewModel.isDetailViewPresent) {
+            TermsDetailBottomSheet(viewModel:viewModel)
+                .presentationDetents([.height(540)])
+                .presentationDragIndicator(.hidden)
+                .presentationBackground(.clear)
+        }
+        .onAppear{
+            focusedField = Field.username
+        }
+        .toolbar(.hidden)
+    }
+}
+
+@ViewBuilder
+private func statusText(viewModel:CreateAccountViewModel) -> some View {
+    if viewModel.errorText.isEmpty {
+        if viewModel.isUsernameValid {
+            HStack(spacing:4){
+                Image("check")
+                    .resizable()
+                    .renderingMode(.template)
+                    .frame(width:16,height:16)
+                    .foregroundStyle(.success)
+                
+                Text("중복확인이 완료 되었습니다")
+                    .fontStyle(.caption1)
+                    .foregroundStyle(.success)
+            }
+            .padding(.leading,12)
+        } else {
+            Text("최소 2자~8자 (영문,국문 가능)")
+                .fontStyle(.caption1)
+                .foregroundStyle(.gray5)
+                .padding(.leading,12)
+        }
+    } else {
+        Text(viewModel.errorText)
+            .fontStyle(.caption1)
+            .foregroundStyle(.error)
+            .padding(.leading,12)
     }
 }
 
