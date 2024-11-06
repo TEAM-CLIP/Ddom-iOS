@@ -17,7 +17,7 @@ class StoreListViewModel: ObservableObject {
             filteredStores = []
         } else {
             filteredStores = registeredStores.filter {
-                $0.name.localizedCaseInsensitiveContains(searchQuery)
+                $0.storeName.localizedCaseInsensitiveContains(searchQuery)
             }
         }
     }}
@@ -49,46 +49,59 @@ class StoreListViewModel: ObservableObject {
     func selectLocation(_ zone: Zone) {
         print("selectLocation")
         selectedLocation = zone
-        fetchStores(selectedLocation:zone)
+        getStores(selectedLocation:zone)
     }
     
     private func fetchInitialData() {
         isLoading = true
-        
-        storeService.fetchLocations()
+        print("fetchInitialData")
+        storeService.getZones()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 self?.isLoading = false
                 if case .failure(let error) = completion {
                     print("Error fetching data: \(error)")
                 }
-            } receiveValue: { [weak self] zoneResponse in
-                print("fetchLocations-zoneResponse: \(zoneResponse)")
-                self?.zones = zoneResponse.zone
-                guard let selectedLocation = zoneResponse.zone.first else {return}
-                self?.selectedLocation = selectedLocation
-                self?.fetchStores(selectedLocation: selectedLocation)
+            } receiveValue: { [weak self] (statusCode,data) in
+                guard let self = self else { return }
+                
+                if statusCode == 200 {
+                    if let res = try? JSONDecoder().decode(ZoneResponse.self, from: data) {
+                        zones = res.zone
+                        print("asdf\(res)")
+                        guard let _selectedLocation = res.zone.first else {return}
+                        selectedLocation = _selectedLocation
+                        getStores(selectedLocation: _selectedLocation)
+                        print("asdf\(res)")
+                    }
+                    print("heelo")
+                } else {
+                    print("Unexpected status code in getZones: \(statusCode)")
+                }
             }
             .store(in: &cancellables)
     }
     
-    private func fetchStores(selectedLocation:Zone) {
+    private func getStores(selectedLocation:Zone) {
         isLoading = true
-        storeService.fetchRestaurants(for: selectedLocation.id)
+        storeService.getStores(for: selectedLocation.id)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 self?.isLoading = false
                 if case .failure(let error) = completion {
                     print("Error fetching data: \(error)")
                 }
-            } receiveValue: { [weak self] stores in
-                print("fetchStores-stores: \(stores)")
-                self?.registeredStores = stores.registered
-                self?.nonRegisteredStores = stores.nonRegistered
+            } receiveValue: { [weak self] (statusCode,data)  in
+                guard let self = self else { return }
+                if statusCode == 200 {
+                    if let res = try? JSONDecoder().decode(StoreResponse.self, from: data) {
+                        registeredStores = res.registered
+                        nonRegisteredStores = res.nonRegistered
+                    }
+                } else {
+                    print("Unexpected status code in getStores: \(statusCode)")
+                }
             }
             .store(in: &cancellables)
     }
 }
-
-//storeService.fetchRestaurants()
-

@@ -14,7 +14,7 @@ struct StoreCard: View {
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
-                AsyncImage(url: URL(string: store.imageUrl)) { image in
+                AsyncImage(url: URL(string: store.storeImgUrl)) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -24,7 +24,7 @@ struct StoreCard: View {
                         .fill(.gray2)
                 }
                 if isRegistered {
-                    Text("\(store.favoriteUserCount ?? 0)명 단골")
+                    Text("\(store.favoriteUserCount ?? "0")명 단골")
                         .fontStyle(.caption1)
                         .foregroundStyle(.myWhite)
                         .padding(.horizontal,12)
@@ -44,17 +44,17 @@ struct StoreCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             
             VStack (alignment: .leading, spacing:0) {
-                Text(store.category)
+                Text(store.storeType)
                     .fontStyle(.body5)
                     .foregroundStyle(.gray6)
                 
-                Text(store.name)
+                Text(store.storeName)
                     .fontStyle(.title2)
                     .foregroundStyle(.gray10)
                     .padding(.bottom,8)
                 
                 if isRegistered {
-                    Text(store.discountDescription ?? "설명 없음")
+                    Text(store.discountPolicy?.discountDescription ?? "설명 없음")
                         .fontStyle(.title2)
                         .foregroundStyle(.primary9)
                 }

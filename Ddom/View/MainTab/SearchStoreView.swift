@@ -103,7 +103,7 @@ struct SearchResultRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: URL(string: store.imageUrl)) { image in
+            AsyncImage(url: URL(string: store.storeImgUrl)) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -114,7 +114,7 @@ struct SearchResultRow: View {
             .frame(width: 40, height: 40)
             .clipShape(Circle())
             
-            Text(store.name)
+            Text(store.storeName)
                 .fontStyle(.body4)
                 .foregroundStyle(.gray10)
                 .attributedText(searchQuery, color: .primary9)
