@@ -9,6 +9,5 @@ import Foundation
 
 struct APIConstants {
     static let isDevelopment = true
-    static let baseUrl = "https://run.mocky.io/v3"
-//    static let baseUrl = isDevelopment ? "http://138.2.124.93:8080/api/v1" : "아직 없음"
+    static let baseUrl = isDevelopment ? "http://138.2.124.93:8080/api/v1" : "아직 없음"
 }
