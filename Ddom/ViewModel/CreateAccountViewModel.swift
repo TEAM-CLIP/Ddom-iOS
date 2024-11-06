@@ -117,38 +117,76 @@ class CreateAccountViewModel: ObservableObject {
                 return
             }
         }
-        // MARK: 서버로부터 중복여부 체크 로직 수행
-        // errorText="닉네임 중복입니다"
-        isUsernameValid = true
+        verifyUsername()
+    }
+    
+    func verifyUsername() {
+        isLoading = true
+        authService.verifyUsername(username)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                self?.isLoading = false
+                if case .failure(let error) = completion {
+                    print(error.localizedDescription)
+                }
+            } receiveValue: { [weak self] (statusCode, data) in
+                guard let self = self else {return}
+                if statusCode == 200 {
+                    if let res = try? JSONDecoder().decode(VerifyNicknameResponse.self, from: data) {
+                        if res.isDuplicated {
+                            errorText="닉네임 중복입니다"
+                        } else {
+                            isUsernameValid = true
+                        }
+                    }
+                }
+            }
+            .store(in: &cancellables)
     }
     
     func signUp() {
-        appState.isLoggedIn = true
-        //        authService.signUp(username: username, phone: phone)
-        //            .receive(on: DispatchQueue.main)
-        //            .sink { [weak self] completion in
-        //                self?.isLoading = false
-        //                if case .failure(let error) = completion {
-        //
-        //                    print(error.localizedDescription)
-        //                }
-        //            } receiveValue: { [weak self] signUpResponse in
-        //                self?.handleSuccessfulLogin(loginResponse: signUpResponse)
-        //            }
-        //            .store(in: &cancellables)
+        isLoading = true
+        let params = [
+            "registerToken": UserDefaults.standard.string(forKey: "registerToken") ?? "dummyRegisterToken",
+            "servicePermission":isServiceChecked,
+            "privatePermission":isPrivacyChecked,
+            "advertisingPermission":isAdvertisementChecked,
+            "marketingPermission":isMarketingChecked,
+            "nickname": username,
+            "phoneNumber": phone
+        ] as [String : Any]
+        
+        authService.signUp(params)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                self?.isLoading = false
+                if case .failure(let error) = completion {
+                    print(error.localizedDescription)
+                }
+            } receiveValue: { [weak self] (statusCode, data) in
+                guard let self = self else {return}
+                print(statusCode)
+                if statusCode == 200 {
+                    if let res = try? JSONDecoder().decode(SignUpResponse.self, from: data) {
+                        handleSuccessfulLogin(
+                            accessToken: res.accessToken,
+                            refreshToken: res.refreshToken
+                        )
+                    }
+                } else {
+                    print("Unexpected status code: \(statusCode)")
+                }
+            }
+            .store(in: &cancellables)
     }
     
-//    private func handleSuccessfulLogin(loginResponse: LoginResponse) {
-//        do {
-//            try KeychainManager.shared.save(token: loginResponse.token,
-//                                            service: APIConstants.tokenService,
-//                                            account: loginResponse.user.username)
-//            UserDefaults.standard.set(loginResponse.user.username, forKey: "lastLoggedInUsername")
-//            appState.isLoggedIn = true
-//        } catch {
-//            print(error.localizedDescription)
-////            currentToast = .error(error.localizedDescription)
-//        }
-//    }
+    func handleSuccessfulLogin(accessToken: String,refreshToken:String) {
+        do {
+            try KeychainManager.shared.save(token: accessToken, forKey: "accessToken")
+            try KeychainManager.shared.save(token: refreshToken, forKey: "refreshToken")
+            appState.isLoggedIn = true
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
 }
-
