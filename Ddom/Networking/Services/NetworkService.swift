@@ -15,16 +15,13 @@ class NetworkService: NetworkServiceProtocol {
         parameters: Parameters? = nil
     ) -> AnyPublisher<APIResult<T>, APIError> {
         return Future { promise in
-            var headers: HTTPHeaders = [:]
-            if let token = KeychainManager.shared.getDummyAccessToken() {
-                //            if let token = KeychainManager.shared.getAccessToken() {
-                headers = ["Authorization": "Bearer \(token)"]
-            } else {
-                //TODO: 토큰 없을때, 자동 로그아웃 구현??
+            guard let token = KeychainManager.shared.getAccessToken() else {
+                self.handleUnauthorized()
                 promise(.failure(.unauthorized))
-                print("entering GuestMode")
                 return
             }
+            
+            let headers: HTTPHeaders = ["Authorization": "Bearer \(token)"]
             
             AF.request(
                 APIConstants.baseUrl + endpoint.path,
@@ -35,6 +32,17 @@ class NetworkService: NetworkServiceProtocol {
             )
             .validate()
             .responseData { response in
+                if let statusCode = response.response?.statusCode {
+                    switch statusCode {
+                    case 401: // Unauthorized
+                        self.handleUnauthorized()
+                        promise(.failure(.unauthorized))
+                        return
+                        
+                    default: break
+                    }
+                }
+                
                 switch response.result {
                 case .success(let data):
                     if let statusCode = response.response?.statusCode {
@@ -83,5 +91,9 @@ class NetworkService: NetworkServiceProtocol {
             }
         }
         .eraseToAnyPublisher()
+    }
+    
+    private func handleUnauthorized() {
+        UserDefaultsManager.shared.logout()
     }
 }
