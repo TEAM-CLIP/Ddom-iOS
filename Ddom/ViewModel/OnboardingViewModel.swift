@@ -8,8 +8,8 @@ import KakaoSDKAuth
 import KakaoSDKUser
 
 class OnboardingViewModel: ObservableObject {
-    private let appState: AppState = AppState.shared
-    
+    private let userDefaults = UserDefaultsManager.shared
+
     @Published var navigationPath = NavigationPath()
     @Published var isSocialLoading: Bool = false
     private let authService: AuthServiceProtocol
@@ -19,6 +19,7 @@ class OnboardingViewModel: ObservableObject {
     }
     
     private var cancellables = Set<AnyCancellable>()
+
     //MARK: - 소셜로그인 관련 메서드
     func performKakaoLogin() {
         isSocialLoading = true
@@ -97,10 +98,9 @@ class OnboardingViewModel: ObservableObject {
     
     private func handleSuccessfulLogin(accessToken: String,refreshToken:String) {
         do {
-            print("accessToken:\(accessToken)")
             try KeychainManager.shared.save(token: accessToken, forKey: "accessToken")
             try KeychainManager.shared.save(token: refreshToken, forKey: "refreshToken")
-            appState.isLoggedIn = true
+            userDefaults.login() // AppStorage에 선언된 isLoggedIn true로 변경
         } catch {
             print(error.localizedDescription)
         }

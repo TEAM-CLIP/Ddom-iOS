@@ -4,7 +4,7 @@ import KakaoSDKAuth
 
 @main
 struct DdomApp: App {
-    @StateObject private var appState = AppState.shared
+    @StateObject private var appState = AppState()
     
     init() {
         KakaoSDK.initSDK(appKey: "4200bb2006c1e166c3fbb5783d9c6a89")
@@ -25,9 +25,10 @@ struct DdomApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
+    private let userDefaults = UserDefaultsManager.shared
     
     var body: some View {
-        if appState.isLoggedIn || appState.isGuestMode {
+        if userDefaults.isLoggedIn || appState.isGuestMode {
             MainTabView()
         } else {
             OnboardingView()
@@ -38,5 +39,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AppState.shared)
+        .environmentObject(AppState())
 }

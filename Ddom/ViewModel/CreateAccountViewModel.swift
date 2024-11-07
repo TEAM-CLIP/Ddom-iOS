@@ -10,8 +10,7 @@ import SwiftUI
 import Combine
 
 class CreateAccountViewModel: ObservableObject {
-    private let appState: AppState = AppState.shared
-    
+    private let userDefaults = UserDefaultsManager.shared
     @Published var username: String = "" { didSet{
         if username != oldValue {
             withAnimation (.mediumEaseInOut){
@@ -187,7 +186,7 @@ class CreateAccountViewModel: ObservableObject {
         do {
             try KeychainManager.shared.save(token: accessToken, forKey: "accessToken")
             try KeychainManager.shared.save(token: refreshToken, forKey: "refreshToken")
-            appState.isLoggedIn = true
+            userDefaults.login()
         } catch {
             print(error.localizedDescription)
         }
