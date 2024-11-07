@@ -29,12 +29,7 @@ class StoreListViewModel: ObservableObject {
     @Published var filteredStores: [Store] = []
     
     @Published var recentSearches: [String] = []
-    
-    let description = [
-        "이대신촌":"신촌동, 봉원동, 창천동, 대현동 등",
-        "건대성수":"성수동, 화양동 등"
-    ]
-    
+    @Published var isRegisterationPopupPresent: Bool = false
     @Published var isLoading: Bool = false
     
     
@@ -52,31 +47,27 @@ class StoreListViewModel: ObservableObject {
         getStores(selectedLocation:zone)
     }
     
-    private func fetchInitialData() {
+    private func fetchInitialData(){
         isLoading = true
-        print("fetchInitialData")
         storeService.getZones()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 self?.isLoading = false
                 if case .failure(let error) = completion {
-                    print("Error fetching data: \(error)")
+                    print(error.localizedDescription)
                 }
-            } receiveValue: { [weak self] (statusCode,data) in
+            } receiveValue: { [weak self] result in
                 guard let self = self else { return }
-                
-                if statusCode == 200 {
-                    if let res = try? JSONDecoder().decode(ZoneResponse.self, from: data) {
-                        zones = res.zone
-                        print("asdf\(res)")
-                        guard let _selectedLocation = res.zone.first else {return}
-                        selectedLocation = _selectedLocation
-                        getStores(selectedLocation: _selectedLocation)
-                        print("asdf\(res)")
-                    }
-                    print("heelo")
-                } else {
-                    print("Unexpected status code in getZones: \(statusCode)")
+                switch result {
+                case .success(let res):
+                    zones = res.zone
+                    guard let _selectedLocation = res.zone.first else {return}
+                    selectedLocation = _selectedLocation
+                    getStores(selectedLocation: _selectedLocation)
+                case .error(let errorResponse):
+                    print("fetchInitialData Error: \(errorResponse.code)")
+                default:
+                    print("exceptional")
                 }
             }
             .store(in: &cancellables)
@@ -89,17 +80,19 @@ class StoreListViewModel: ObservableObject {
             .sink { [weak self] completion in
                 self?.isLoading = false
                 if case .failure(let error) = completion {
-                    print("Error fetching data: \(error)")
+                    print("getStores:\(error)")
                 }
-            } receiveValue: { [weak self] (statusCode,data)  in
+            } receiveValue: { [weak self] result in
                 guard let self = self else { return }
-                if statusCode == 200 {
-                    if let res = try? JSONDecoder().decode(StoreResponse.self, from: data) {
-                        registeredStores = res.registered
-                        nonRegisteredStores = res.nonRegistered
-                    }
-                } else {
-                    print("Unexpected status code in getStores: \(statusCode)")
+                switch result {
+                case .success(let res):
+                    nonRegisteredStores = res.unregistered
+                    registeredStores = res.registered
+                    
+                case .error(let errorResponse):
+                    print("getStores Error: \(errorResponse.code)")
+                default:
+                    print("exceptional")
                 }
             }
             .store(in: &cancellables)

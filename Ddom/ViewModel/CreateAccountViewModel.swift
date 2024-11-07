@@ -129,16 +129,19 @@ class CreateAccountViewModel: ObservableObject {
                 if case .failure(let error) = completion {
                     print(error.localizedDescription)
                 }
-            } receiveValue: { [weak self] (statusCode, data) in
+            } receiveValue: { [weak self] result in
                 guard let self = self else {return}
-                if statusCode == 200 {
-                    if let res = try? JSONDecoder().decode(VerifyNicknameResponse.self, from: data) {
-                        if res.isDuplicated {
-                            errorText="닉네임 중복입니다"
-                        } else {
-                            isUsernameValid = true
-                        }
+                switch result {
+                case .success(let res):
+                    if res.isDuplicated {
+                        errorText="닉네임 중복입니다"
+                    } else {
+                        isUsernameValid = true
                     }
+                case .error(let errorResponse):
+                    print("verifyUsername Error: \(errorResponse.code)")
+                default:
+                    print("exceptional")
                 }
             }
             .store(in: &cancellables)
@@ -163,18 +166,18 @@ class CreateAccountViewModel: ObservableObject {
                 if case .failure(let error) = completion {
                     print(error.localizedDescription)
                 }
-            } receiveValue: { [weak self] (statusCode, data) in
+            } receiveValue: { [weak self] result in
                 guard let self = self else {return}
-                print(statusCode)
-                if statusCode == 200 {
-                    if let res = try? JSONDecoder().decode(SignUpResponse.self, from: data) {
-                        handleSuccessfulLogin(
-                            accessToken: res.accessToken,
-                            refreshToken: res.refreshToken
-                        )
-                    }
-                } else {
-                    print("Unexpected status code: \(statusCode)")
+                switch result {
+                case .success(let res):
+                    handleSuccessfulLogin(
+                        accessToken: res.accessToken,
+                        refreshToken: res.refreshToken
+                    )
+                case .error(let errorResponse):
+                    print("signUp Error: \(errorResponse.code)")
+                default:
+                    print("Exceptional Signup")
                 }
             }
             .store(in: &cancellables)

@@ -71,30 +71,25 @@ class OnboardingViewModel: ObservableObject {
     private func authenticateWithServer(for provider:String, with idToken: String) {
         authService.socialLogin(idToken: idToken, provider: provider)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                self?.isSocialLoading = false
-                print(completion)
+            .sink { completion in
                 if case .failure(let error) = completion {
-                    print("Error occurred: \(error)")
+                    print(error.localizedDescription)
                 }
-            } receiveValue: { [weak self] (statusCode, data) in
+            } receiveValue: { [weak self] result in
                 guard let self = self else {return}
-                switch statusCode {
-                case 200:
-                    if let res = try? JSONDecoder().decode(SocialLoginResponse.self, from: data) {
-                        handleSuccessfulLogin(
-                            accessToken: res.accessToken,
-                            refreshToken: res.refreshToken
-                        )
-                    }
+                switch result {
+                case .success(let res):
+                    handleSuccessfulLogin(
+                        accessToken: res.accessToken,
+                        refreshToken: res.refreshToken
+                    )
                     
-                case 201:
-                    if let res = try? JSONDecoder().decode(RegisterTokenResponse.self, from: data) {
-                        UserDefaults.standard.set(res.registerToken, forKey: "registerToken")
-                        navigationPath.append(Route.createAccount)
-                    }
-                default:
-                    print("Unexpected status code: \(statusCode)")
+                case .redirect(let res):
+                    UserDefaults.standard.set(res.registerToken, forKey: "registerToken")
+                    navigationPath.append(Route.createAccount)
+                    
+                case .error(let errorResponse):
+                    print("Unexpected status code: \(errorResponse.code)")
                 }
             }
             .store(in: &cancellables)
@@ -102,6 +97,7 @@ class OnboardingViewModel: ObservableObject {
     
     private func handleSuccessfulLogin(accessToken: String,refreshToken:String) {
         do {
+            print("accessToken:\(accessToken)")
             try KeychainManager.shared.save(token: accessToken, forKey: "accessToken")
             try KeychainManager.shared.save(token: refreshToken, forKey: "refreshToken")
             appState.isLoggedIn = true
