@@ -5,9 +5,9 @@ struct Store: Codable, Identifiable {
     let storeType: String
     
     // MARK: - Registered Store
-    var favoriteUserCount: String?
+    var favoriteUserCount: Int?
     var isFavorited: Bool?
-    let discountPolicy: DiscountPolicy?
+    let discountPolicy: [DiscountPolicy]?
     
     
     enum CodingKeys: String, CodingKey {
