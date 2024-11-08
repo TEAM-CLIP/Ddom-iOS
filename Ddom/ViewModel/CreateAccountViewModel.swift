@@ -11,6 +11,8 @@ import Combine
 
 class CreateAccountViewModel: ObservableObject {
     private let userDefaults = UserDefaultsManager.shared
+    let registerToken: String
+    
     @Published var username: String = "" { didSet{
         if username != oldValue {
             withAnimation (.mediumEaseInOut){
@@ -80,7 +82,8 @@ class CreateAccountViewModel: ObservableObject {
     
     private let authService: AuthService
     
-    init(authService: AuthService = AuthService()) {
+    init(authService: AuthService = AuthService(),registerToken:String) {
+        self.registerToken = registerToken
         self.authService = authService
     }
     
@@ -149,7 +152,7 @@ class CreateAccountViewModel: ObservableObject {
     func signUp() {
         isLoading = true
         let params = [
-            "registerToken": UserDefaults.standard.string(forKey: "registerToken") ?? "dummyRegisterToken",
+            "registerToken": registerToken,
             "servicePermission":isServiceChecked,
             "privatePermission":isPrivacyChecked,
             "advertisingPermission":isAdvertisementChecked,
@@ -183,12 +186,8 @@ class CreateAccountViewModel: ObservableObject {
     }
     
     func handleSuccessfulLogin(accessToken: String,refreshToken:String) {
-        do {
-            try KeychainManager.shared.save(token: accessToken, forKey: "accessToken")
-            try KeychainManager.shared.save(token: refreshToken, forKey: "refreshToken")
-            userDefaults.login()
-        } catch {
-            print(error.localizedDescription)
-        }
+        print("회원가입 성공")
+        KeychainManager.shared.saveTokens(accessToken, refreshToken)
+        userDefaults.login()
     }
 }

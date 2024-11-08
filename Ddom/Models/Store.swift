@@ -16,7 +16,7 @@ struct Store: Codable, Identifiable {
     }
 }
 
-struct DiscountPolicy: Codable {
+struct DiscountPolicy: Codable, Hashable {
     let discountType: String
     let discountDescription: String
 }

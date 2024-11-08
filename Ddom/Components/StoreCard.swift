@@ -10,6 +10,8 @@ struct StoreCard: View {
     @ObservedObject var viewModel: StoreListViewModel
     let store: Store
     let isRegistered: Bool
+    let onHeartClick:()->Void
+    let onCardClick: () -> Void
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -18,13 +20,16 @@ struct StoreCard: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                    
                 } placeholder: {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(.gray2)
+                    ZStack{
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.gray2)
+                        ProgressView()
+                    }
                 }
+                
                 if isRegistered {
-                    Text("\(store.favoriteUserCount ?? "0")명 단골")
+                    Text("\(store.favoriteUserCount ?? 0)명 단골")
                         .fontStyle(.caption1)
                         .foregroundStyle(.myWhite)
                         .padding(.horizontal,12)
@@ -53,17 +58,20 @@ struct StoreCard: View {
                     .foregroundStyle(.gray10)
                     .padding(.bottom,8)
                 
-                if isRegistered {
-                    Text(store.discountPolicy?.discountDescription ?? "설명 없음")
-                        .fontStyle(.title2)
-                        .foregroundStyle(.primary9)
+                if let discountPolicy = store.discountPolicy, isRegistered {
+                    ForEach(discountPolicy, id:\.self){ policy in
+                        Text(policy.discountDescription)
+                            .fontStyle(.caption1)
+                            .foregroundStyle(.gray4)
+                    }
                 }
             }
             
             Spacer()
             
             if isRegistered {
-                Button(action: {print("pressed")}) {
+                Button(action: {onHeartClick()}
+                ) {
                     Image("heart")
                         .resizable()
                         .frame(width: 24, height: 24)
@@ -75,7 +83,46 @@ struct StoreCard: View {
         }
         .padding(.horizontal, 16)
         .background(.myWhite)
-        .opacity(isRegistered ? 1.0 : 0.7)
+        .opacity(isRegistered ? 1.0 : 0.5)
+        
+        .onTapGesture{onCardClick()}
     }
 }
-
+//MARK: - popup 테스트 용
+//#Preview("StoreCard") {
+//    StoreCard_Previews()
+//}
+//struct StoreCard_Previews: View {
+//    @State private var showPopup = false
+//    
+//    var body: some View {
+//        ZStack {
+//            StoreCard(
+//                viewModel: .mockViewModel(),
+//                store:  Store(id: "1",
+//                              storeName: "스타벅스 이대점",
+//                              storeImgUrl: "https://picsum.photos/200/200",
+//                              storeType: "카페",
+//                              favoriteUserCount: 150,
+//                              isFavorited: false,
+//                              discountPolicy: [
+//                                DiscountPolicy(discountType: "REGULAR", discountDescription: "매주 월요일 10% 할인"),
+//                                DiscountPolicy(discountType: "FIRST", discountDescription: "첫 방문 15% 할인"),
+//                                DiscountPolicy(discountType: "FIRST", discountDescription: "첫 방문 15% 할인")
+//                              ]),
+//                isRegistered: true,
+//                onClick:{showPopup = true}
+//            )
+//            
+//            if showPopup {
+//                CustomPopupOneBtn(
+//                    isShowing: $showPopup,
+//                    popupData: .storeRegister {
+//                        print("Register action")
+//                    }
+//                )
+//            }
+//        }
+//        .environmentObject(AppState())
+//    }
+//}
