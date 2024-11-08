@@ -12,8 +12,8 @@ struct LogoNavBar: View {
                 .frame(width: 24, height: 24)
         }
         .padding(.horizontal, 16)
-        .frame(height: 56)
-        .background(Color.white)
+        .frame(height: 48)
+        .background(.white)
     }
 }
 
@@ -33,7 +33,7 @@ struct BackNavBar: View {
             Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .frame(height: 48)
         .background(.white)
     }
 }
@@ -61,7 +61,7 @@ struct TitleBackNavBar: View {
             Spacer()
         }
         .padding(.horizontal, 16)
-        .frame(height: 56)
+        .frame(height: 48)
         .background(Color.white)
     }
 }
@@ -95,7 +95,7 @@ struct DropdownNavBar: View {
             }
         }
         .padding(.horizontal, 16)
-        .frame(height: 56)
+        .frame(height: 48)
         .background(Color.white)
     }
 }
@@ -121,7 +121,7 @@ struct CloseNavBar: View {
             }
         }
         .padding(.horizontal, 16)
-        .frame(height: 56)
+        .frame(height: 48)
         .background(Color.white)
     }
 }
