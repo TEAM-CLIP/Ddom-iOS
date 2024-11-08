@@ -7,6 +7,7 @@ import UIKit
 import AuthenticationServices
 
 struct OnboardingView: View {
+    @EnvironmentObject var appState : AppState
     @StateObject var viewModel = OnboardingViewModel()
     
     var body: some View {
@@ -69,13 +70,13 @@ struct OnboardingView: View {
                     )
                     .frame(height: 50)
                     .cornerRadius(10)
-//                    .overlay(
-//                        RoundedRectangle(cornerRadius: 10)
-//                            .stroke(.gray60, lineWidth: 1)
-//                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(.gray6, lineWidth: 1)
+                    )
                     
                     Button(action: {
-                        viewModel.moveToMainTabView()
+                        appState.isGuestMode = true
                     }) {
                         Text("로그인 없이 사용하기")
                             .fontStyle(.caption)
@@ -91,10 +92,10 @@ struct OnboardingView: View {
             .onAppear{setupAppearance()}
             .navigationDestination(for: Route.self) { route in
                 switch route {
-                case .createAccount:
-                    CreateAccountView()
+                case .createAccount(let registerToken):
+                    CreateAccountView(registerToken: registerToken)
                 default:
-                    CreateAccountView()
+                    EmptyView()
                 }
             }
         }

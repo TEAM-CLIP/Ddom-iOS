@@ -25,10 +25,9 @@ struct DdomApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
-    private let userDefaults = UserDefaultsManager.shared
     
     var body: some View {
-        if userDefaults.isLoggedIn || appState.isGuestMode {
+        if appState.isLoggedIn || appState.isGuestMode {
             MainTabView()
         } else {
             OnboardingView()

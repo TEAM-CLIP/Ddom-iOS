@@ -22,29 +22,58 @@ enum KeychainKeys {
 }
 
 protocol KeychainManagerProtocol {
-    func save(token: String, forKey:String,service:String) throws
-    func retrieve(forKey: String, service: String) throws -> String
-    func delete(forKey: String, service: String) throws
+    func saveTokens(_ accessToken: String, _ refreshToken: String)
+    func getAccessToken() -> String?
+    func getRefreshToken() -> String?
+    func clearToken()
 }
 
 class KeychainManager:KeychainManagerProtocol {
-    static let shared = KeychainManager() // 싱글톤 유지
-    private init() {} // 싱글톤 유지
+    static let shared = KeychainManager()
+    
+    private init() {}
+    
     
     func getAccessToken() -> String? {
-        try? self.retrieve(forKey: KeychainKeys.accessToken)
+        do {
+            return try retrieve(forKey: KeychainKeys.accessToken)
+        } catch{
+            print("getAccessToken Error in KeychainManager")
+            return nil
+        }
     }
     
     func getRefreshToken() -> String? {
-        try? self.retrieve(forKey: KeychainKeys.refreshToken)
+        do {
+            return try retrieve(forKey: KeychainKeys.refreshToken)
+        } catch{
+            print("getRefreshToken Error in KeychainManager")
+            return nil
+        }
     }
     
     func clearToken() {
-        try? self.delete(forKey: KeychainKeys.accessToken)
-        try? self.delete(forKey: KeychainKeys.refreshToken)
+        do{
+            try delete(forKey: KeychainKeys.accessToken)
+            try delete(forKey: KeychainKeys.refreshToken)
+        } catch{
+            print("clear token Error in KeychainManager")
+        }
     }
     
-    //MARK: - 핵심 로직
+    func saveTokens(_ accessToken: String, _ refreshToken: String) {
+        do{
+            try save(token: accessToken, forKey: KeychainKeys.accessToken)
+            try save(token: refreshToken, forKey: KeychainKeys.refreshToken)
+        } catch{
+            print("Save token Error in KeychainManager")
+        }
+    }
+    
+}
+
+// MARK: - 내부용 핵심 함수
+private extension KeychainManager {
     func save(token: String, forKey key: String, service: String = KeychainKeys.serviceName) throws {
         guard let data = token.data(using: .utf8) else {
             throw KeychainError.encodingError

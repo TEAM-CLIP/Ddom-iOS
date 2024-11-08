@@ -47,15 +47,16 @@ final class UserDefaultsManager {
     }
     
     // MARK: - 메서드들
-    
     func saveAppleUserEmail(_ email: String, for userId: String) {
         appleUserEmails[userId] = email
     }
     
     func getAppleUserEmail(for userId: String) -> String? {
+        print("getAppleUserEmail from UserDefaultsManager: \(appleUserEmails[userId] ?? "no email found")")
         return appleUserEmails[userId]
     }
     
+    // - UserDefaults 업데이트 -> isLoggedInPublisher에 새 값 전달 -> AppState의 isLoggedIn 업데이트 -> UI 자동 갱신
     func login() {
         isLoggedIn = true
     }
@@ -64,9 +65,5 @@ final class UserDefaultsManager {
         KeychainManager.shared.clearToken()
         isLoggedIn = false
         username = nil
-    }
-    // 특정 키만 삭제
-    func removeValue(forKey key: String) {
-        defaults.removeObject(forKey: key)
     }
 }

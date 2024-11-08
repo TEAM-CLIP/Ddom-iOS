@@ -7,13 +7,19 @@
 
 import SwiftUI
 
+enum Field: Hashable {
+    case username
+    case phone
+}
+
 struct CreateAccountView: View {
-    @StateObject var viewModel = CreateAccountViewModel()
+    @StateObject private var viewModel : CreateAccountViewModel
     @FocusState private var focusedField: Field?
+    let registerToken: String
     
-    enum Field: Hashable {
-        case username
-        case phone
+    init(registerToken: String) {
+        self.registerToken = registerToken
+        _viewModel = StateObject(wrappedValue: CreateAccountViewModel(registerToken: registerToken))
     }
     
     var body: some View {
@@ -160,6 +166,6 @@ private func statusText(viewModel:CreateAccountViewModel) -> some View {
 }
 
 #Preview {
-    CreateAccountView()
+    CreateAccountView(registerToken: "asdf")
 }
 

@@ -16,7 +16,7 @@ protocol NetworkServiceProtocol {
 
 protocol AuthServiceProtocol {
     // 소셜 로그인
-    func socialLogin(idToken: String, provider: String) -> AnyPublisher<APIResult<SocialLoginResponse>, APIError>
+    func socialLogin(idToken: String, provider: String,email:String?) -> AnyPublisher<APIResult<SocialLoginResponse>, APIError>
     // 회원가입
     func signUp(_ params: [String: Any]) -> AnyPublisher<APIResult<SignUpResponse>, APIError>
     // 닉네임 검증

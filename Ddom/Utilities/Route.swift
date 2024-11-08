@@ -6,7 +6,7 @@
 //
 
 enum Route: Hashable {
-    case createAccount
+    case createAccount(registerToken: String)
     case onboarding
     case selectLocation
     case searchStore
