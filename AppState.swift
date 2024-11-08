@@ -5,6 +5,7 @@ import Combine
 class AppState: ObservableObject {
     @Published var isLoggedIn = UserDefaultsManager.shared.isLoggedIn
     @Published var currentToast: ToastType?
+    @Published var currentPopup: PopupType?
     @Published var isGuestMode: Bool = false
     
     private var cancellables = Set<AnyCancellable>()

@@ -25,13 +25,49 @@ struct DdomApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
+    @State private var isToastPresent = false
+    @State private var isPopupPresent = false
     
     var body: some View {
-        if appState.isLoggedIn || appState.isGuestMode {
-            MainTabView()
-        } else {
-            OnboardingView()
-                .ignoresSafeArea()
+        ZStack {
+            if appState.isLoggedIn || appState.isGuestMode {
+                MainTabView()
+            } else {
+                OnboardingView()
+                    .ignoresSafeArea()
+            }
+            
+            if isToastPresent, let toast = appState.currentToast {
+                CustomToast(toastData: toast)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .padding(.top, 40)
+                    .zIndex(1)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .top)),
+                        removal: .opacity.combined(with: .move(edge: .top))
+                    ))
+                    .animation(.mediumEaseInOut, value: isToastPresent)
+            }
+            
+            if isPopupPresent, let popup = appState.currentPopup {
+                CustomPopup(isShowing:$isPopupPresent, popupData: popup)
+            }
+        }
+        .onChange(of: appState.currentToast?.text) { _, newValue in
+            if newValue != nil {
+                withAnimation {
+                    isToastPresent = true
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    withAnimation {
+                        isToastPresent = false
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        appState.currentToast = nil
+                    }
+                }
+            }
         }
     }
 }
