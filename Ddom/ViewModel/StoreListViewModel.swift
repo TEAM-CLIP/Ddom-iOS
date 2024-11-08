@@ -12,7 +12,7 @@ import SwiftUI
 class StoreListViewModel: ObservableObject {
     @Published var path = NavigationPath()
     
-    @Published var searchQuery = "" { didSet{
+    @Published var searchQuery:String { didSet{
         if searchQuery.isEmpty {
             filteredStores = []
         } else {
@@ -28,80 +28,108 @@ class StoreListViewModel: ObservableObject {
     @Published var zones: [Zone] = []
     @Published var filteredStores: [Store] = []
     
-    @Published var recentSearches: [String] = []
-    
-    let description = [
-        "이대신촌":"신촌동, 봉원동, 창천동, 대현동 등",
-        "건대성수":"성수동, 화양동 등"
-    ]
-    
+    @Published var recentSearches: [String]
+    @Published var isRegisterationPopupPresent: Bool = false
     @Published var isLoading: Bool = false
     
     
     private let storeService: StoreServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    init(storeService: StoreServiceProtocol = StoreService()) {
+    init(storeService: StoreServiceProtocol = StoreService(),
+         recentSearches:[String] = [],
+         searchQuery:String = ""
+    ) {
         self.storeService = storeService
+        self.recentSearches = recentSearches
+        self.searchQuery = searchQuery
         fetchInitialData()
     }
     
+    // 최종 헤더에 가게 이름도 표시해야하기 때문에, selectedLocation을 zone 타입으로
     func selectLocation(_ zone: Zone) {
         print("selectLocation")
         selectedLocation = zone
-        getStores(selectedLocation:zone)
+        getStores()
     }
     
-    private func fetchInitialData() {
+    func registerStore(_ id: String) {
+        print("registerStore")
+//        storeService.postLike(for: id)
+    }
+    
+    func selectSearchResult(_ store: Store){
+        if !recentSearches.contains(store.storeName){
+            recentSearches.insert(store.storeName, at: 0)
+        }
+        //TODO: id갑 들고 화면 이동
+        print("moveToDetailView")
+    }
+    
+    func selectStore(_ id:String ){
+        //TODO: id갑 들고 화면 이동
+        print("selectStore")
+    }
+    
+    func removeRecentSearch(_ text: String){
+        recentSearches=recentSearches.filter{$0 != text}
+    }
+    
+    func clearRecentSearch(){
+        recentSearches=[]
+    }
+    
+    func getStores() {
+        guard let locationId = selectedLocation?.id else { return }
         isLoading = true
-        print("fetchInitialData")
+        storeService.getStores(for: locationId)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                self?.isLoading = false
+                if case .failure(let error) = completion {
+                    print("getStores:\(error)")
+                }
+            } receiveValue: { [weak self] result in
+                guard let self = self else { return }
+                switch result {
+                case .success(let res):
+                    nonRegisteredStores = res.unregistered
+                    registeredStores = res.registered
+                    
+                case .error(let errorResponse):
+                    print("getStores Error: \(errorResponse.code)")
+                default:
+                    print("exceptional")
+                }
+            }
+            .store(in: &cancellables)
+    }
+    private func fetchInitialData(){
+        isLoading = true
+        print("fetching InitialData")
         storeService.getZones()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 self?.isLoading = false
                 if case .failure(let error) = completion {
-                    print("Error fetching data: \(error)")
+                    print("fetchInitialData: \(error)")
                 }
-            } receiveValue: { [weak self] (statusCode,data) in
+            } receiveValue: { [weak self] result in
                 guard let self = self else { return }
-                
-                if statusCode == 200 {
-                    if let res = try? JSONDecoder().decode(ZoneResponse.self, from: data) {
-                        zones = res.zone
-                        print("asdf\(res)")
-                        guard let _selectedLocation = res.zone.first else {return}
-                        selectedLocation = _selectedLocation
-                        getStores(selectedLocation: _selectedLocation)
-                        print("asdf\(res)")
-                    }
-                    print("heelo")
-                } else {
-                    print("Unexpected status code in getZones: \(statusCode)")
+                switch result {
+                case .success(let res):
+                    zones = res.zone
+                    guard let _selectedLocation = res.zone.first else {return}
+                    selectedLocation = _selectedLocation
+                    getStores()
+                case .error(let errorResponse):
+                    print("fetchInitialData Error: \(errorResponse.code)")
+                default:
+                    print("exceptional")
                 }
             }
             .store(in: &cancellables)
     }
     
-    private func getStores(selectedLocation:Zone) {
-        isLoading = true
-        storeService.getStores(for: selectedLocation.id)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                self?.isLoading = false
-                if case .failure(let error) = completion {
-                    print("Error fetching data: \(error)")
-                }
-            } receiveValue: { [weak self] (statusCode,data)  in
-                guard let self = self else { return }
-                if statusCode == 200 {
-                    if let res = try? JSONDecoder().decode(StoreResponse.self, from: data) {
-                        registeredStores = res.registered
-                        nonRegisteredStores = res.nonRegistered
-                    }
-                } else {
-                    print("Unexpected status code in getStores: \(statusCode)")
-                }
-            }
-            .store(in: &cancellables)
-    }
+    
 }

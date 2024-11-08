@@ -8,7 +8,7 @@ import KakaoSDKAuth
 import KakaoSDKUser
 
 class OnboardingViewModel: ObservableObject {
-    private let appState: AppState = AppState.shared
+    private let userDefaults = UserDefaultsManager.shared
     
     @Published var navigationPath = NavigationPath()
     @Published var isSocialLoading: Bool = false
@@ -19,30 +19,31 @@ class OnboardingViewModel: ObservableObject {
     }
     
     private var cancellables = Set<AnyCancellable>()
+    
     //MARK: - 소셜로그인 관련 메서드
     func performKakaoLogin() {
         isSocialLoading = true
         if UserApi.isKakaoTalkLoginAvailable() {
             UserApi.shared.loginWithKakaoTalk { [weak self] (oauthToken, error) in
                 if let error = error {
-                    print(error.localizedDescription)
+                    print("performKakaoLogin1:\(error)")
                     self?.isSocialLoading = false
                     return
                 }
                 
                 if let token = oauthToken?.accessToken {
-                    self?.authenticateWithServer(for:"KAKAO", with:token)
+                    self?.authenticateWithServer(for:"KAKAO", with:token, email:"")
                 }
             }
         } else {
             UserApi.shared.loginWithKakaoAccount { [weak self] (oauthToken, error) in
                 if let error = error {
-                    print(error.localizedDescription)
+                    print("performKakaoLogin2:\(error)")
                     self?.isSocialLoading = false
                     return
                 }
                 if let token = oauthToken?.accessToken {
-                    self?.authenticateWithServer(for:"KAKAO", with:token)
+                    self?.authenticateWithServer(for:"KAKAO", with:token, email:"")
                 }
             }
         }
@@ -58,6 +59,10 @@ class OnboardingViewModel: ObservableObject {
             return
         }
         
+        if let email = appleIDCredential.email {
+            userDefaults.saveAppleUserEmail(email, for: appleIDCredential.user)
+        }
+        
         guard let identityTokenData = appleIDCredential.identityToken,
               let identityToken = String(data: identityTokenData, encoding: .utf8) else {
             print("Error: Unable to fetch identity token or authorization code")
@@ -65,48 +70,42 @@ class OnboardingViewModel: ObservableObject {
             return
         }
         
-        authenticateWithServer(for:"APPLE", with:identityToken)
+        authenticateWithServer(
+            for:"APPLE",
+            with:identityToken,
+            email: userDefaults.getAppleUserEmail(for: appleIDCredential.user)
+        )
     }
     
-    private func authenticateWithServer(for provider:String, with idToken: String) {
-        authService.socialLogin(idToken: idToken, provider: provider)
+    private func authenticateWithServer(for provider:String, with idToken: String, email:String?) {
+        authService.socialLogin(idToken: idToken, provider: provider, email:email)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                self?.isSocialLoading = false
-                print(completion)
+            .sink { completion in
                 if case .failure(let error) = completion {
-                    print("Error occurred: \(error)")
+                    print("authenticateWithServer:\(error)")
                 }
-            } receiveValue: { [weak self] (statusCode, data) in
+            } receiveValue: { [weak self] result in
                 guard let self = self else {return}
-                switch statusCode {
-                case 200:
-                    if let res = try? JSONDecoder().decode(SocialLoginResponse.self, from: data) {
-                        handleSuccessfulLogin(
-                            accessToken: res.accessToken,
-                            refreshToken: res.refreshToken
-                        )
-                    }
+                switch result {
+                case .success(let res):
+                    handleSuccessfulLogin(
+                        accessToken: res.accessToken,
+                        refreshToken: res.refreshToken
+                    )
                     
-                case 201:
-                    if let res = try? JSONDecoder().decode(RegisterTokenResponse.self, from: data) {
-                        UserDefaults.standard.set(res.registerToken, forKey: "registerToken")
-                        navigationPath.append(Route.createAccount)
-                    }
-                default:
-                    print("Unexpected status code: \(statusCode)")
+                case .redirect(let res):
+                    navigationPath.append(Route.createAccount(registerToken: res.registerToken))
+                    
+                    
+                case .error(let errorResponse):
+                    print("Unexpected status code: \(errorResponse.code)")
                 }
             }
             .store(in: &cancellables)
     }
     
-    private func handleSuccessfulLogin(accessToken: String,refreshToken:String) {
-        do {
-            try KeychainManager.shared.save(token: accessToken, forKey: "accessToken")
-            try KeychainManager.shared.save(token: refreshToken, forKey: "refreshToken")
-            appState.isLoggedIn = true
-        } catch {
-            print(error.localizedDescription)
-        }
+    private func handleSuccessfulLogin(accessToken: String, refreshToken:String) {
+        KeychainManager.shared.saveTokens(accessToken, refreshToken)
+        userDefaults.login()
     }
 }

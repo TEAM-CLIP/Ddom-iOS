@@ -4,7 +4,7 @@ import KakaoSDKAuth
 import KakaoSDKUser
 import Alamofire
 
-class AuthService:AuthServiceProtocol {
+class AuthService: AuthServiceProtocol {
     private let networkService: NetworkServiceProtocol
     
     init(
@@ -13,15 +13,16 @@ class AuthService:AuthServiceProtocol {
     ) {
         self.networkService = networkService
     }
-    func socialLogin(idToken: String, provider: String) -> AnyPublisher<(Int, Data), APIError> {
-        return networkService.requestWithoutAuth(.socialLogin(provider), method: .post, parameters: ["accessToken": idToken] )
+    
+    func socialLogin(idToken: String, provider: String,email:String?) -> AnyPublisher<APIResult<SocialLoginResponse>, APIError> {
+        return networkService.requestWithoutAuth(.socialLogin(provider), method: .post, parameters: ["accessToken": idToken, "email":email ?? ""] )
     }
     
-    func signUp(_ params:[String:Any]) -> AnyPublisher<(Int, Data), APIError> {
+    func signUp(_ params:[String:Any]) -> AnyPublisher<APIResult<SignUpResponse>, APIError> {
         return networkService.requestWithoutAuth(.signUp, method: .post, parameters: params)
     }
     
-    func verifyUsername(_ username: String) -> AnyPublisher<(Int, Data), APIError> {
+    func verifyUsername(_ username: String) -> AnyPublisher<APIResult<VerifyNicknameResponse>, APIError> {
         let parameters = ["nickname": username]
         return networkService.requestWithoutAuth(.checkUsername, method: .post, parameters: parameters)
     }

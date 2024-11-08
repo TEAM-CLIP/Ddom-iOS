@@ -37,7 +37,7 @@ struct CustomButton: View {
             if isLoading {
                 ProgressView()
                     .tint(loadingTint)
-                    .frame(maxHeight:48)
+                    .frame(maxWidth: isFullWidth ? .infinity : .none, maxHeight:48,alignment: .center)
             } else {
                 HStack(spacing:8){
                     if(iconName != nil){
@@ -53,8 +53,7 @@ struct CustomButton: View {
                     
                 }
                 .padding(13)
-                .frame(maxHeight:48)
-                .frame(maxWidth: isFullWidth ? .infinity : .none)
+                .frame(maxWidth: isFullWidth ? .infinity : .none, maxHeight:48)
                 .background(isDisabled ? disabledBgColor : enabledBgColor)
                 .foregroundColor(isDisabled ? disabledFgColor : enabledFgColor)
                 .cornerRadius(cornerRadius)

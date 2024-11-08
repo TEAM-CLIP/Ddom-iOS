@@ -1,9 +1,3 @@
-//
-//  SelectLocationView.swift
-//  Ddom
-//
-//  Created by Neoself on 11/1/24.
-//
 import SwiftUI
 
 struct SelectLocationView: View {
@@ -13,16 +7,15 @@ struct SelectLocationView: View {
     var body: some View {
         VStack(spacing: 0) {
             BackNavBar()
+                .padding(.bottom,16)
             
-            VStack{
+            VStack(spacing:24){
                 Text("또옴 가게 지역 선택")
                     .fontStyle(.heading2)
                     .foregroundStyle(.gray10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 24)
                 
-                VStack{
+                LazyVStack(spacing:12){
                     ForEach(viewModel.zones, id:\.self) { zone in
                         locationItem(zone)
                     }
@@ -30,14 +23,12 @@ struct SelectLocationView: View {
                 
                 Spacer()
                 
-                CustomButton(
-                    action: {
-                        dismiss() },
-                    isPrimary: false,
-                    isLoading: false,
-                    text: "선택 완료하기",
-                    isDisabled: false,
-                    isFullWidth: true
+                CustomButton(action: { dismiss() },
+                             isPrimary: false,
+                             isLoading: false,
+                             text: "선택 완료하기",
+                             isDisabled: false,
+                             isFullWidth: true
                 )
                 .padding(.bottom, 8)
             }
@@ -54,11 +45,11 @@ struct SelectLocationView: View {
             HStack{
                 VStack(alignment: .leading, spacing: 4) {
                     Text(zone.name.components(separatedBy: ",").joined(separator: "/"))
-                        .fontStyle(.body3)
+                        .fontStyle(.title2)
                         .foregroundStyle(.gray10)
                     
-                    Text(viewModel.description[zone.name] ?? "세부설명 없음")
-                        .fontStyle(.body5)
+                    Text(zone.description)
+                        .fontStyle(.body4)
                         .foregroundStyle(.gray5)
                 }
                 
@@ -67,6 +58,7 @@ struct SelectLocationView: View {
                 if viewModel.selectedLocation == zone {
                     Image("check")
                         .resizable()
+                        .renderingMode(.template)
                         .frame(width: 24, height: 24)
                         .foregroundStyle(.gray5)                }
             }
@@ -74,11 +66,12 @@ struct SelectLocationView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 8)
-            .fill(viewModel.selectedLocation == zone ? .surface1 : .clear)
+                .fill(viewModel.selectedLocation == zone ? .surface1 : .clear)
         )
     }
 }
 
-#Preview{
-    SelectLocationView(viewModel: StoreListViewModel())
+
+#Preview("Default") {
+    SelectLocationView(viewModel: .mockViewModel())
 }
