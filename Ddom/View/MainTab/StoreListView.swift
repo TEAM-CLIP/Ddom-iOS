@@ -16,6 +16,17 @@ struct StoreListView: View {
                 VStack(spacing: 0) {
                     storeListHeader(viewModel: viewModel)
                         .padding(.bottom,16)
+                    Button(action:{
+                        appState.showPopup(type: .storeRegister("테스트가게"), action: {print("test")})
+                    }){
+                        Text("Popup")
+                    }
+                    
+                    Button(action:{
+                        appState.currentToast = ToastData(type: .storeRegistered, action: {print("storeRegistered")})
+                    }){
+                        Text("Toast")
+                    }
                     
                     if viewModel.isLoading {
                         ProgressView()
@@ -29,8 +40,8 @@ struct StoreListView: View {
                                         store: store,
                                         isRegistered:true,
                                         onHeartClick: {
-                                            appState.currentPopup = .storeRegister(
-                                                name:store.storeName,
+                                            appState.showPopup(
+                                                type: .storeRegister(store.storeName),
                                                 action: {viewModel.registerStore(store.id)}
                                             )
                                         },
@@ -57,20 +68,18 @@ struct StoreListView: View {
                     }
                 }
             }
-        }
-        .background(.white)
-        
-        .navigationDestination(for: Route.self) { route in
-            switch route {
-            case .selectLocation:
-                SelectLocationView(viewModel:viewModel)
-            case .searchStore:
-                SearchStoreView(viewModel:viewModel)
-            default:
-                EmptyView()
+            .navigationDestination(for: Route.self) { route in
+                switch route {
+                case .selectLocation:
+                    SelectLocationView(viewModel:viewModel)
+                case .searchStore:
+                    SearchStoreView(viewModel:viewModel)
+                default:
+                    EmptyView()
+                }
             }
         }
-        
+        .background(.white)
     }
     
 }

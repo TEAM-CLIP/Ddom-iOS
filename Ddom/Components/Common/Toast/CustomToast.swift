@@ -9,19 +9,19 @@ import SwiftUI
 import Foundation
 
 struct CustomToast: View {
-    let toastData: ToastType
+    let toastData: ToastData
     
     var body: some View {
         HStack{
-            Text(toastData.text)
+            Text(toastData.type.text)
                 .font(.body5)
                 .foregroundStyle(.white)
             
             Spacer()
             
-            if let buttonData = toastData.button {
-                Button(action: buttonData.action ) {
-                    Text(buttonData.label)
+            if let action = toastData.action {
+                Button(action: action ) {
+                    Text(toastData.type.button)
                         .fontStyle(.body5)
                         .foregroundStyle(.secondary6)
                 }
@@ -38,16 +38,16 @@ struct CustomToast: View {
     }
 }
 
-#Preview("Popup") {
-    CustomPopupOneBtn_Preview()
+#Preview("Toast") {
+    CustomToast_Preview()
 }
 
-struct CustomPopupOneBtn_Preview: View {
+struct CustomToast_Preview: View {
     @State private var showPopup = false
 
     var body: some View {
-        CustomToast(toastData: .storeRegistered(action: {print("heeloo")}))
+        CustomToast(toastData: ToastData(type: .storeRegistered, action: {print("heeloo")}))
         Spacer()
-        CustomToast(toastData: .storeDeleted(name: "스타벅스 이대", action: {print("heeloo")}))
+        CustomToast(toastData: ToastData(type: .storeDeleted("테스트 가게"), action: {print("deleted")}))
     }
 }

@@ -1,68 +1,50 @@
 import SwiftUI
 
 struct CustomPopup: View {
-    @Binding var isShowing: Bool
-    let popupData: PopupType
+    let hidePopup: () -> Void
+    let popupData: PopupData
     
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.3)
-                .edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 0) {
-                VStack(spacing:6){
-                    if let storeName = popupData.storeName {
-                        VStack(spacing:4){
-                            HStack(spacing:0){
-                                Text(storeName)
-                                    .fontStyle(.body3)
-                                Text("를")
-                                    .fontStyle(.body4)
-                            }
-                            Text(popupData.title)
-                                .fontStyle(.body4)
-                                .multilineTextAlignment(.center)
-                        }
-                        .foregroundColor(.gray10)
-                    } else {
-                        Text(popupData.title)
-                            .fontStyle(.body3)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.gray10)
-                    }
-                    
-                    if let description = popupData.description {
-                        Text(description)
-                            .fontStyle(.caption1)
-                            .foregroundColor(.gray5)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .padding(.vertical,20)
+        VStack(spacing: 0) {
+            VStack(spacing:6){
+                Text(popupData.type.title)
+                    .fontStyle(.body3)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.gray10)
                 
-                if popupData.isBtnHorizontal {
-                    horizontalButtonLayer
-                } else {
-                    verticalButtonLayer
+                
+                if let description = popupData.type.description {
+                    Text(description)
+                        .fontStyle(.caption1)
+                        .foregroundColor(.gray5)
+                        .multilineTextAlignment(.center)
                 }
             }
-            .padding(.horizontal,12)
-            .padding(.vertical,8)
-            .background(RoundedRectangle(cornerRadius:20)
-                .fill(.white)
-            )
-            .padding(.horizontal, 44)
+            .padding(.vertical,20)
+            
+            if popupData.type.isBtnHorizontal {
+                horizontalButtonLayer
+            } else {
+                verticalButtonLayer
+            }
         }
+        .padding(.horizontal,12)
+        .padding(.vertical,8)
+        .background(RoundedRectangle(cornerRadius:20)
+            .fill(.white)
+        )
+        .padding(.horizontal, 44)
     }
+    
     
     // MARK: - 하단 버튼 레이어
     private var verticalButtonLayer: some View {
         VStack(spacing: 4) {
             Button(action: {
-                popupData.primaryButton.action()
-                withAnimation(.fastEaseOut) { isShowing = false }
+                popupData.action()
+                hidePopup()
             }) {
-                Text(popupData.primaryButton.label)
+                Text(popupData.type.primaryButtonText)
                     .frame(maxWidth: .infinity)
                     .fontStyle(.body5)
                     .padding(.vertical, 9)
@@ -73,7 +55,7 @@ struct CustomPopup: View {
             }
             
             Button(action: {
-                withAnimation(.fastEaseOut) { isShowing = false }
+                hidePopup()
             }) {
                 Text("닫기")
                     .fontStyle(.caption1)
@@ -86,9 +68,9 @@ struct CustomPopup: View {
     private var horizontalButtonLayer: some View {
         HStack(spacing: 8) {
             Button(action: {
-                withAnimation(.fastEaseOut) { isShowing = false }
+                hidePopup()
             }) {
-                Text(popupData.secondaryButtonText)
+                Text(popupData.type.secondaryButtonText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 13)
                     .background(.gray10)
@@ -96,10 +78,10 @@ struct CustomPopup: View {
             }
             
             Button(action: {
-                popupData.primaryButton.action()
-                withAnimation(.fastEaseOut) { isShowing = false }
+                popupData.action()
+                hidePopup()
             }) {
-                Text(popupData.primaryButton.label)
+                Text(popupData.type.primaryButtonText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 13)
                     .background(.gray10)
@@ -112,16 +94,16 @@ struct CustomPopup: View {
 }
 
 //#Preview("Popup") {
-//    CustomPopupOneBtn_Preview()
+//    CustomPopup_Preview()
 //}
 //
-//struct CustomPopupOneBtn_Preview: View {
-//    @State private var showPopup = false
+//struct CustomPopup_Preview: View {
+//    @State private var showPopup = true
 //
 //    var body: some View {
-//        CustomPopup(isShowing: $showPopup, popupData: .storeRegister(name: "이대", action: {print("heeloo")}))
-//        CustomPopup(isShowing: $showPopup, popupData: .login(action: {print("heeloo")}))
-//        CustomPopup(isShowing: $showPopup, popupData: .storeDelete(name: "이대",action: {print("heeloo")}))
-//        CustomPopup(isShowing: $showPopup, popupData: .storeFull(action: {print("heeloo")}))
+//        CustomPopup(isShowing: $showPopup, popupData: PopupData(type:.storeRegister("이대"),action:{print("storeRegister")}))
+//        CustomPopup(isShowing: $showPopup, popupData: PopupData(type:.storeDelete("이대"),action:{print("storeDelete")}))
+//        CustomPopup(isShowing: $showPopup, popupData: PopupData(type:.login,action:{print("login")}))
+//        CustomPopup(isShowing: $showPopup, popupData: PopupData(type:.storeFull,action:{print("storeFull")}))
 //    }
 //}
